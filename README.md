@@ -30,6 +30,7 @@ vendor/             p5.js 1.9.0 (LGPL-2.1) and qrcode-generator 1.4.4 (MIT)
 | `?scale=1.5` | scales text, nodes and lines (large screens) |
 | `?qr=0` / `?qr=1` | hide or show the QR code |
 | `?mode=install` | same as opening `installation.html` |
+| `?flash=0` / `?flash=1` | turn the new-word flash off or on (on by default only in the installation) |
 
 Installation mode hides the cursor and the contribute button and shows a QR code (bottom left, above the legend) pointing to `QR_URL` in `js/config.js`.
 
@@ -37,11 +38,11 @@ Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/insta
 
 ## Keys
 
-`space` pause drift, `r` refresh data, `d` diagnostics panel, `f` fullscreen.
+`space` pause drift, `r` refresh data, `d` diagnostics panel, `f` fullscreen, `t` preview the flash.
 
 ## Behaviour
 
-- New responses are merged into the existing field every 30 seconds. Existing nodes keep their position; new words appear with a short ring.
+- New responses are merged into the existing field every 30 seconds. Existing nodes keep their position; new words appear with a short ring. In the installation, a new word also triggers a white full-screen flash fading out in under a second (at most one flash every 3 seconds).
 - The last valid dataset is cached in the browser. If the network or the Apps Script fails, the field keeps showing the cached corpus. It never falls back to invented data.
 - Text is transparent HTML over the canvas: nodes and edges stay visible underneath it, as in the original sketch.
 - Edges are drawn as independent short segments, as in the original sketch. A single long dashed path (`setLineDash`) proved several times slower in Chrome.

@@ -12,12 +12,14 @@
     ?qr=0 / ?qr=1   esconde ou mostra o QR code
     ?mode=install   equivale a abrir installation.html
     ?debug=1        mostra o painel de diagnóstico desde o início
+    ?flash=0 / =1   desliga ou liga o flash de palavra nova (ligado só na instalação)
 
   Teclas:
     espaço  pausa a deriva
     r       atualiza os dados
     d       mostra o painel de diagnóstico
     f       ecrã inteiro
+    t       testa o flash (só o efeito visual, não mexe nos dados)
 */
 (function () {
   const C = window.RCFT_CONFIG;
@@ -39,6 +41,14 @@
   const GRID_SPACING = 80;
   const NEW_RING_MS = 4000;     // anel que assinala uma palavra nova
 
+  // Flash de ecrã inteiro quando entra uma palavra nova (por omissão só na instalação).
+  // Um flash por atualização, e no máximo um a cada 3 segundos, mesmo que entrem
+  // várias palavras de uma vez: evita sequências de flashes (fotossensibilidade).
+  const FLASH = params.has("flash") ? params.get("flash") === "1" : MODE === "install";
+  const FLASH_MS = 900;          // duração do desvanecimento
+  const FLASH_PEAK = 0.9;        // opacidade inicial do branco
+  const FLASH_MIN_GAP_MS = 3000;
+
   const el = {
     coords: document.getElementById("coords"),
     debug: document.getElementById("debug"),
@@ -50,6 +60,7 @@
   let sameEdges = [];
   let diffEdges = [];
   let paused = false;
+  let flashAt = -Infinity;
   let firstLoadDone = false;
   let loading = false;
   let rowsCount = 0;
@@ -194,13 +205,14 @@
 
       const existing = new Map(nodes.map(n => [n.key, n]));
       const next = [];
+      let added = 0;
       for (const a of agg.values()) {
         let n = existing.get(a.key);
         if (!n) {
           n = new Node(a.key);
           n.measure();
           placeRandom(n);
-          if (firstLoadDone) n.bornAt = p.millis();
+          if (firstLoadDone) { n.bornAt = p.millis(); added++; }
         }
         n.f = a.f;
         n.country = a.country;
@@ -208,6 +220,7 @@
       }
 
       nodes = next;
+      if (added > 0 && FLASH) triggerFlash();
       buildEdges();
       rowsCount = rows.length;
       lastSource = source;
@@ -248,6 +261,24 @@
         updateCoords(true);
         updateDebug();
       }
+    }
+
+    // ---------- Flash ----------
+
+    function triggerFlash() {
+      const now = p.millis();
+      if (now - flashAt < FLASH_MIN_GAP_MS) return;
+      flashAt = now;
+    }
+
+    // Branco por cima do campo, a desvanecer. Fica por baixo do texto HTML.
+    function drawFlash(now) {
+      const t = (now - flashAt) / FLASH_MS;
+      if (t < 0 || t >= 1) return;
+      const a = 255 * FLASH_PEAK * Math.pow(1 - t, 2);
+      p.noStroke();
+      p.fill(255, a);
+      p.rect(0, 0, p.width, p.height);
     }
 
     // ---------- Desenho ----------
@@ -419,6 +450,7 @@
         if (!paused) n.update();
         n.display(now);
       }
+      drawFlash(now);
       updateCoords(false);
     };
 
@@ -428,6 +460,7 @@
       else if (k === "r") refresh();
       else if (k === "d") { el.debug.hidden = !el.debug.hidden; updateDebug(); }
       else if (k === "f") p.fullscreen(!p.fullscreen());
+      else if (k === "t") { flashAt = -Infinity; triggerFlash(); }
     };
   });
 })();
