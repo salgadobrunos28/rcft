@@ -11,6 +11,7 @@
     ?scale=1.5      escala da interface e do desenho (ecrãs grandes)
     ?qr=0 / ?qr=1   esconde ou mostra o QR code
     ?mode=install   equivale a abrir installation.html
+    ?debug=1        mostra o painel de diagnóstico desde o início
 
   Teclas:
     espaço  pausa a deriva
@@ -272,9 +273,12 @@
       } catch (e) {
         lastError = e && e.message ? e.message : String(e);
         console.warn("[rcft] falha ao atualizar:", lastError);
+        // Sem dados nenhuns no ecrã: tenta outra vez mais cedo.
+        if (!firstLoadDone) setTimeout(refresh, 5000);
       } finally {
         loading = false;
         lastSync = new Date();
+        updateCoords(true);
         updateDebug();
       }
     }
@@ -321,7 +325,9 @@
       lastCoordsAt = now;
 
       if (!nodes.length) {
-        el.coords.textContent = loading || !firstLoadDone ? "loading responses" : "";
+        if (loading) el.coords.textContent = "loading responses";
+        else if (!firstLoadDone && lastError) el.coords.textContent = "responses unavailable, retrying";
+        else el.coords.textContent = "";
         return;
       }
       const start = Math.max(0, nodes.length - coordLines);
@@ -374,6 +380,7 @@
       p.textAlign(p.CENTER, p.CENTER);
 
       buildQR();
+      if (params.get("debug") === "1") el.debug.hidden = false;
       applyResponsive();
       computeZones();
 

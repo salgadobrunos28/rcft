@@ -39,7 +39,17 @@ function safe_(value, max) {
   return s;
 }
 
+// A leitura fica em cache 20 segundos: com muitos visitantes (ou o ecrã da
+// instalação a pedir de 30 em 30 segundos) a folha só é lida uma vez por ciclo.
+const CACHE_KEY = "rcft-rows";
+const CACHE_SECONDS = 20;
+
 function doGet() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get(CACHE_KEY);
+  if (hit) {
+    return ContentService.createTextOutput(hit).setMimeType(ContentService.MimeType.JSON);
+  }
   const values = sheet_().getDataRange().getValues();
   values.shift(); // cabeçalhos
   const out = [];
@@ -52,7 +62,9 @@ function doGet() {
       word: word
     });
   }
-  return json_(out);
+  const body = JSON.stringify(out);
+  try { cache.put(CACHE_KEY, body, CACHE_SECONDS); } catch (_) { /* limite de 100 KB */ }
+  return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
@@ -75,6 +87,7 @@ function doPost(e) {
   lock.waitLock(10000);
   try {
     sheet_().appendRow(row);
+    CacheService.getScriptCache().remove(CACHE_KEY);
   } finally {
     lock.releaseLock();
   }

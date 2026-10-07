@@ -21,7 +21,8 @@ window.RCFT_CONFIG = {
   REFRESH_MS: 30000,
 
   // Tempo máximo de espera por uma resposta do Apps Script (ms).
-  FETCH_TIMEOUT_MS: 25000,
+  // O Apps Script atual demora por vezes mais de 30 segundos a responder.
+  FETCH_TIMEOUT_MS: 90000,
 
   // Endereço para onde aponta o QR code da instalação
   // (o mesmo do QR code que estava no rcinstallation.cargo.site).
