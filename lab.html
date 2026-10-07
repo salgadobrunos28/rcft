@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>rcft lab</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/rcft.css?v=16">
+  <style>
+    #lab-params {
+      position: fixed; left: 40px; bottom: 30px; z-index: 3; margin: 0;
+      font: 10px/1.5 ui-monospace, Menlo, Consolas, monospace; color: #fff;
+      pointer-events: none; white-space: pre;
+    }
+  </style>
+</head>
+<body class="map">
+  <!--
+    Laboratório de variações da Relational Cartography. Não faz parte do site
+    nem da instalação. Parâmetros no URL, por exemplo:
+    lab.html?rel=sequence&forces=1&fade=1&tracker=1&trails=0&seed=7
+  -->
+  <div id="stage" aria-hidden="true"></div>
+  <pre id="lab-params"></pre>
+
+  <script src="js/config.js?v=16"></script>
+  <script src="js/data.js?v=16"></script>
+  <script src="vendor/p5-1.9.0.min.js"></script>
+  <script src="js/lab.js?v=16"></script>
+</body>
+</html>
