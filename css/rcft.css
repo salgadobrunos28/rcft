@@ -1,0 +1,344 @@
+/* Relational Cartography (rcft) */
+
+:root {
+  --blue: rgb(0, 24, 255);
+  --fg: #ffffff;
+  --s: 1;                       /* escala da interface, definida por ?scale= */
+  --pad: calc(6px * var(--s));  /* folga dos painéis de texto */
+  --font: Helvetica, Arial, sans-serif;
+}
+
+[hidden] { display: none !important; }
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--blue);
+  color: var(--fg);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+::selection { background: var(--fg); color: var(--blue); }
+
+/* ---------- Mapa ---------- */
+
+body.map {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+#stage, #stage canvas {
+  position: fixed;
+  inset: 0;
+  display: block;
+}
+
+/* Os painéis têm o fundo azul: as linhas do grafo passam por baixo do texto. */
+.panel {
+  position: fixed;
+  z-index: 2;
+  margin: 0;
+  padding: var(--pad);
+  background: var(--blue);
+  color: var(--fg);
+  font-weight: normal;
+}
+
+#title {
+  left: calc(40px * var(--s) - var(--pad));
+  top: calc(40px * var(--s) - var(--pad));
+  font-size: calc(12px * var(--s));
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+#about {
+  right: calc(40px * var(--s) - var(--pad));
+  top: calc(40px * var(--s) - var(--pad));
+  width: calc(min(42vw, 520px * var(--s)) + 2 * var(--pad));
+  font-size: calc(11px * var(--s));
+  line-height: calc(16px * var(--s));
+}
+
+#about p { margin: 0; }
+
+#legend {
+  left: calc(44px * var(--s) - var(--pad));
+  bottom: calc(36px * var(--s) - var(--pad));
+  font-size: calc(10px * var(--s));
+  pointer-events: none;
+}
+
+#legend .row {
+  display: flex;
+  align-items: center;
+  height: calc(20px * var(--s));
+}
+
+#legend .row:nth-child(3) { margin-top: calc(3px * var(--s)); }
+#legend .row:nth-child(3),
+#legend .row:nth-child(4) { height: calc(14px * var(--s)); }
+
+#legend svg { flex: none; overflow: visible; }
+#legend circle { fill: none; stroke: var(--fg); stroke-width: 1; vector-effect: non-scaling-stroke; }
+#legend line { stroke: var(--fg); stroke-width: 1; vector-effect: non-scaling-stroke; }
+
+#legend .dot {
+  width: calc(12px * var(--s));
+  height: calc(12px * var(--s));
+  margin: 0 calc(11px * var(--s)) 0 calc(-2px * var(--s));
+}
+
+#legend .ln {
+  width: calc(80px * var(--s));
+  height: calc(2px * var(--s));
+  margin-right: calc(10px * var(--s));
+}
+
+#legend .pulse {
+  transform-origin: 50% 50%;
+  animation: rcft-pulse 1.57s linear infinite;
+}
+
+@keyframes rcft-pulse {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(1.2); }
+  50%  { transform: scale(1); }
+  75%  { transform: scale(0.8); }
+  100% { transform: scale(1); }
+}
+
+#coords {
+  right: calc(40px * var(--s) - var(--pad));
+  bottom: calc(36px * var(--s) - var(--pad));
+  font-size: calc(10px * var(--s));
+  line-height: calc(18px * var(--s));
+  text-align: right;
+  white-space: pre;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+#coords:empty { display: none; }
+
+.button,
+#contribute {
+  display: inline-block;
+  padding: calc(8px * var(--s)) calc(16px * var(--s));
+  border: 1px solid var(--fg);
+  color: var(--fg);
+  background: var(--blue);
+  font-family: var(--font);
+  font-size: calc(10px * var(--s));
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#contribute {
+  left: 50%;
+  bottom: max(calc(12px * var(--s)), calc(4vh - 15px));
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.button:hover,
+.button:focus-visible,
+#contribute:hover,
+#contribute:focus-visible {
+  background: var(--fg);
+  color: var(--blue);
+  outline: none;
+}
+
+#qr {
+  left: 50%;
+  bottom: calc(28px * var(--s));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8px * var(--s));
+  font-size: calc(10px * var(--s));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#qr-code {
+  width: calc(96px * var(--s));
+  height: calc(96px * var(--s));
+  background: var(--fg);
+}
+
+#qr-code svg { display: block; width: 100%; height: 100%; }
+
+#debug {
+  position: fixed;
+  z-index: 3;
+  left: calc(40px * var(--s) - var(--pad));
+  top: calc(70px * var(--s));
+  margin: 0;
+  padding: var(--pad);
+  background: var(--blue);
+  border: 1px solid var(--fg);
+  font: calc(10px * var(--s)) / 1.5 ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* Modo instalação: sem cursor e sem botão (o QR code substitui-o). */
+html[data-mode="install"],
+html[data-mode="install"] * { cursor: none !important; }
+html[data-mode="install"] #contribute { display: none; }
+
+/* Ecrãs estreitos (telemóvel) */
+@media (max-width: 767px) {
+  #title {
+    left: calc(16px - var(--pad));
+    top: calc(16px - var(--pad));
+  }
+
+  #about {
+    left: calc(16px - var(--pad));
+    right: auto;
+    top: calc(34px - var(--pad));
+    width: calc(100% - 32px + 2 * var(--pad));
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  #about p + p { margin-top: 0; }
+
+  #legend,
+  #coords {
+    bottom: calc(64px - var(--pad));
+    font-size: 8px;
+  }
+
+  #legend { left: calc(16px - var(--pad)); }
+  #legend .row { height: 13px; }
+  #legend .row:nth-child(3),
+  #legend .row:nth-child(4) { height: 11px; }
+  #legend .ln { width: 48px; margin-right: 8px; }
+  #legend .dot { width: 10px; height: 10px; margin-right: 8px; }
+
+  #coords {
+    right: calc(16px - var(--pad));
+    line-height: 13px;
+  }
+
+  #contribute { bottom: 16px; }
+}
+
+/* ---------- Formulário ---------- */
+
+body.form {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.form-wrap {
+  width: 100%;
+  max-width: calc(480px + 32px);
+  margin: 0 auto;
+  padding: 96px 16px 64px;
+}
+
+.form-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 0 calc(16px) 0 calc(16px);
+}
+
+.form-head h1 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.form-head .intro {
+  margin: 10px 0 0;
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+.close {
+  flex: none;
+  display: block;
+  width: 16px;
+  height: 16px;
+  color: var(--fg);
+}
+
+.close svg { display: block; width: 100%; height: 100%; }
+
+.close:hover, .close:focus-visible { opacity: 0.6; outline: none; }
+
+#rcft-form { margin-top: 32px; }
+
+.field { margin-bottom: 22px; }
+
+.field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.field input,
+.field textarea {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 16px;   /* 16px evita o zoom automático no iOS */
+  line-height: 1.3;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.field textarea { min-height: 38px; height: 38px; resize: vertical; }
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--fg);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.form-actions button:disabled { opacity: 0.5; cursor: default; }
+.form-actions button:disabled:hover { background: var(--blue); color: var(--fg); }
+
+#rcft-form-status {
+  font-size: 10px;
+  line-height: 1.5;
+  min-height: 15px;
+}
+
+#rcft-form-status a { color: var(--fg); }
+
+.sink { position: absolute; width: 0; height: 0; border: 0; visibility: hidden; }
+
+@media (min-width: 768px) {
+  .field input,
+  .field textarea { font-size: 12px; }
+}

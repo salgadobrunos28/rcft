@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Relational Cartography (rcft)</title>
+  <meta name="description" content="A generative system tracing the shifting relations between words, people, and territories. Each circle emerges from a collective attempt to articulate what a border signifies.">
+  <meta property="og:title" content="Relational Cartography (rcft)">
+  <meta property="og:description" content="A generative system tracing the shifting relations between words, people, and territories.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0018ff">
+  <link rel="stylesheet" href="css/rcft.css">
+</head>
+<body class="map">
+  <div id="stage" aria-hidden="true"></div>
+
+  <h1 id="title" class="panel">RELATIONAL CARTOGRAPHY</h1>
+
+  <section id="about" class="panel">
+    <p>A generative system tracing the shifting relations between words, people, and territories. Each circle on the screen emerges from a collective attempt to articulate what a border signifies.</p>
+    <p>Rather than reproducing geography, the work approaches cartography as a living gesture - a drawing of relations, tensions, proximities and distances.</p>
+    <p>Through the accumulation of shared language, the piece becomes a mutable cartographic field: a space where meanings drift, connect, separate, and recombine, resisting fixed definitions.</p>
+  </section>
+
+  <div id="legend" class="panel" aria-label="Legend">
+    <div class="row">
+      <svg class="dot" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>
+      <span>static = single response</span>
+    </div>
+    <div class="row">
+      <svg class="dot pulse" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>
+      <span>pulsing = repeated words</span>
+    </div>
+    <div class="row">
+      <svg class="ln" viewBox="0 0 80 2" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="1" x2="80" y2="1"/></svg>
+      <span>same country</span>
+    </div>
+    <div class="row">
+      <svg class="ln" viewBox="0 0 80 2" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="1" x2="80" y2="1" stroke-dasharray="8 5"/></svg>
+      <span>different country</span>
+    </div>
+  </div>
+
+  <div id="coords" class="panel" aria-hidden="true"></div>
+
+  <a id="contribute" class="panel button" href="contribute.html">Contribute a response</a>
+
+  <div id="qr" class="panel" hidden>
+    <div id="qr-code"></div>
+    <span>Contribute a response</span>
+  </div>
+
+  <pre id="debug" hidden></pre>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="vendor/p5-1.9.0.min.js"></script>
+  <script src="vendor/qrcode-generator-1.4.4.js"></script>
+  <script src="js/sketch.js"></script>
+</body>
+</html>

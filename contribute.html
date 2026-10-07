@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Contribute | Relational Cartography (rcft)</title>
+  <meta name="description" content="Contribute a response to Relational Cartography: what does the word border mean to you?">
+  <meta name="theme-color" content="#0018ff">
+  <link rel="stylesheet" href="css/rcft.css">
+</head>
+<body class="form">
+  <main class="form-wrap">
+    <header class="form-head">
+      <div>
+        <h1>Contribute a Response</h1>
+        <p class="intro">You can reply in any language. Short or fragmentary answers are welcome.</p>
+      </div>
+      <a class="close" href="./" aria-label="Back to the cartography">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2 L14 14 M14 2 L2 14" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+      </a>
+    </header>
+
+    <form id="rcft-form" novalidate>
+      <div class="field">
+        <label for="f-country">Where are you responding from?</label>
+        <input id="f-country" name="country" type="text" maxlength="120" autocomplete="country-name" required>
+      </div>
+      <div class="field">
+        <label for="f-meaning">What does the word border mean to you?</label>
+        <textarea id="f-meaning" name="meaning" maxlength="2000" rows="2" required></textarea>
+      </div>
+      <div class="field">
+        <label for="f-forms">What forms can a border take?</label>
+        <textarea id="f-forms" name="forms" maxlength="2000" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label for="f-movement">Do borders change? What makes a border move?</label>
+        <textarea id="f-movement" name="movement" maxlength="2000" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label for="f-space">Is there space between borders? What happens in that space?</label>
+        <textarea id="f-space" name="space" maxlength="2000" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label for="f-oneword">If you had to choose one word related to border:</label>
+        <input id="f-oneword" name="oneword" type="text" maxlength="60" autocomplete="off" required>
+      </div>
+
+      <div class="form-actions">
+        <button class="button" type="submit">Submit</button>
+        <p id="rcft-form-status" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+
+    <iframe id="rcft-sink" name="rcft-sink" class="sink" title="" tabindex="-1" aria-hidden="true"></iframe>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/contribute.js"></script>
+</body>
+</html>
