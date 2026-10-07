@@ -107,6 +107,7 @@
       }
 
       display(now) {
+        if (this.highlight) { this.bornAt = now; this.highlight = false; }
         const r = this.radius();
         p.stroke(255);
         p.noFill();
@@ -150,10 +151,19 @@
       n.y = p.constrain(n.y, b.minY, b.maxY);
     }
 
+    // Dentro do Cargo o iframe pode começar com tamanho zero. Enquanto o canvas
+    // não tiver tamanho real, os nós ficam por colocar (e não se desenham).
+    const MIN_SIZE = 50;
+    function canvasReady() {
+      return p.width >= MIN_SIZE && p.height >= MIN_SIZE;
+    }
+
     function placeRandom(n) {
+      if (!canvasReady()) { n.unplaced = true; return; }
       const b = bounds(n);
       n.x = p.random(b.minX, b.maxX);
       n.y = p.random(b.minY, b.maxY);
+      n.unplaced = false;
     }
 
     function applyResponsive() {
@@ -225,7 +235,7 @@
         if (rows.length === 0 && rowsCount > 0) {
           throw new Error("resposta vazia ignorada");
         }
-        applyRows(rows, "network");
+        applyRows(D.withPending(rows), "network");
         lastError = null;
       } catch (e) {
         lastError = e && e.message ? e.message : String(e);
@@ -345,7 +355,7 @@
     // ---------- Ciclo p5 ----------
 
     p.setup = () => {
-      const c = p.createCanvas(window.innerWidth, window.innerHeight);
+      const c = p.createCanvas(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
       c.parent("stage");
       p.pixelDensity(Math.min(window.devicePixelRatio || 1, 2));
       p.textFont("Helvetica");
@@ -355,9 +365,17 @@
       if (params.get("debug") === "1") el.debug.hidden = false;
       applyResponsive();
 
-      // Mostra logo a última versão guardada; a rede atualiza a seguir.
+      // Mostra logo a última versão guardada (e as respostas acabadas de enviar
+      // a partir deste browser); a rede atualiza a seguir.
       const cached = D.loadCache();
-      if (cached && cached.rows.length) applyRows(cached.rows, "cache");
+      const startRows = D.withPending(cached ? cached.rows : []);
+      if (startRows.length) applyRows(startRows, cached ? "cache" : "pending");
+
+      // Assinala com o anel a palavra que a pessoa acabou de enviar.
+      const justSent = D.recentPendingWords(3 * 60 * 1000);
+      for (const n of nodes) {
+        if (justSent.includes(n.key)) n.highlight = true;
+      }
       updateCoords(true);
 
       refresh();
@@ -370,18 +388,31 @@
 
     p.windowResized = () => {
       const ow = p.width, oh = p.height;
-      p.resizeCanvas(window.innerWidth, window.innerHeight);
+      const wasReady = canvasReady();
+      p.resizeCanvas(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
       applyResponsive();
       for (const n of nodes) {
-        n.x = n.x / ow * p.width;
-        n.y = n.y / oh * p.height;
-        keepInside(n);
+        if (!wasReady || n.unplaced) {
+          // O canvas acabou de ganhar tamanho: os nós aparecem já distribuídos.
+          placeRandom(n);
+        } else {
+          n.x = n.x / ow * p.width;
+          n.y = n.y / oh * p.height;
+          keepInside(n);
+        }
       }
     };
 
     p.draw = () => {
+      // Salvaguarda: se o tamanho mudou sem evento de resize (iframes), ajusta.
+      if (p.width !== Math.max(1, window.innerWidth) || p.height !== Math.max(1, window.innerHeight)) {
+        p.windowResized();
+      }
+
       const now = p.millis();
       p.background(0, 24, 255);
+      if (!canvasReady()) return;
+
       cartesianGrid();
       drawEdges();
       for (const n of nodes) {

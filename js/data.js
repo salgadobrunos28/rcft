@@ -120,5 +120,55 @@
     }
   }
 
-  window.RCFT_DATA = { fetchRows, loadCache, parseRows, normCountry };
+  /*
+    Respostas acabadas de enviar a partir deste browser. O mapa mostra-as logo,
+    sem esperar pela leitura lenta do Apps Script, e retira-as desta lista
+    quando elas aparecem nos dados (ou ao fim de 15 minutos).
+  */
+  const PENDING_KEY = "rcft-pending-v1";
+  const PENDING_MAX_AGE = 15 * 60 * 1000;
+
+  function loadPending() {
+    try {
+      const list = JSON.parse(localStorage.getItem(PENDING_KEY) || "[]");
+      return Array.isArray(list) ? list : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function savePending(list) {
+    try { localStorage.setItem(PENDING_KEY, JSON.stringify(list)); } catch (_) { /* sem armazenamento */ }
+  }
+
+  function addPending(word, country) {
+    const list = loadPending();
+    list.push({ ts: Date.now(), word: String(word).trim(), country: String(country).trim() });
+    savePending(list);
+  }
+
+  // Junta às respostas as que ainda não chegaram aos dados.
+  function withPending(rows) {
+    const now = Date.now();
+    const list = loadPending().filter(pnd =>
+      now - pnd.ts < PENDING_MAX_AGE &&
+      !rows.some(r =>
+        r.word.toLowerCase() === pnd.word.toLowerCase() &&
+        (r.ts === null || r.ts >= pnd.ts - 5 * 60 * 1000)
+      )
+    );
+    savePending(list);
+    return rows.concat(list.map(pnd => ({ ts: pnd.ts, word: pnd.word, country: pnd.country })));
+  }
+
+  // Palavras enviadas há pouco tempo (para as assinalar no mapa).
+  function recentPendingWords(ms) {
+    const now = Date.now();
+    return loadPending().filter(pnd => now - pnd.ts < ms).map(pnd => pnd.word.toLowerCase());
+  }
+
+  window.RCFT_DATA = {
+    fetchRows, loadCache, parseRows, normCountry,
+    addPending, withPending, recentPendingWords
+  };
 })();
