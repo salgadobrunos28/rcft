@@ -23,9 +23,9 @@ window.RCFT_CONFIG = {
   // Tempo máximo de espera por uma resposta do Apps Script (ms).
   FETCH_TIMEOUT_MS: 45000,
 
-  // Endereço para onde aponta o QR code da instalação
-  // (o mesmo do QR code que estava no rcinstallation.cargo.site).
-  QR_URL: "https://rcft.cargo.site/",
+  // Endereço para onde aponta o QR code da instalação: as perguntas, através
+  // de um endereço curto (q/), para o QR ser menos denso.
+  QR_URL: "https://salgadobrunos28.github.io/rcft/q",
 
   // Aspeto do QR code: "inverted" (branco sobre o azul) ou "light" (preto sobre branco).
   QR_STYLE: "inverted"

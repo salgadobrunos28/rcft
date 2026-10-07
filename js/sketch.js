@@ -433,12 +433,13 @@
       el.qr.hidden = false;
     }
 
-    // O QR tem o tamanho de uma célula da grelha (80 px, multiplicado por ?scale).
+    // O QR tem 96 px (multiplicado por ?scale): o endereço das perguntas é mais
+    // longo do que o do site e o código tem mais módulos.
     // Na instalação fica no canto inferior direito, nas margens do texto; no site
     // (se ativado com ?qr=1) fica por cima da legenda, à esquerda.
     function layoutQR() {
       if (el.qr.hidden) return;
-      const size = GRID_SPACING * SCALE;
+      const size = 96 * SCALE;
       const frame = 6 * SCALE;
       const m = 40 * SCALE;
       let x, y;
