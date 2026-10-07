@@ -17,6 +17,13 @@
         flow      cada linha ondula devagar, com ruído próprio
         sag       as linhas descaem como fios suspensos, com ligeira oscilação
         border    só as linhas entre países diferentes (tracejadas) se curvam
+    path=spline      uma só linha contínua e suave que atravessa as palavras por
+                     ordem de chegada (curva de Catmull-Rom convertida em Bézier)
+    tension=1        tensão da curva: 1 suave, 1.5 a 2.5 solta, com laçadas
+    handles=1        mostra as alças de Bézier (linhas retas até aos pontos de
+                     controlo), como num editor de desenho de letra
+    coords=1         etiqueta cada ponto com as suas coordenadas
+    net=0|faint|full rede de linhas retas por baixo da linha contínua
     seed=7           semente (mesmas posições iniciais entre variações)
     hideparams=1     esconde a legenda dos parâmetros
 */
@@ -34,13 +41,18 @@
     trails: q.get("trails") === "1",
     curve: Math.max(0, parseFloat(q.get("curve")) || 0),
     curvemode: ["flow", "sag", "border"].includes(q.get("curvemode")) ? q.get("curvemode") : "flow",
+    path: q.get("path") === "spline",
+    tension: parseFloat(q.get("tension")) || 1,
+    handles: q.get("handles") === "1",
+    coords: q.get("coords") === "1",
+    net: ["0", "faint", "full"].includes(q.get("net")) ? q.get("net") : (q.get("path") === "spline" ? "0" : "full"),
     seed: int(q.get("seed"), 7)
   };
 
   const legend = document.getElementById("lab-params");
   if (q.get("hideparams") === "1") legend.hidden = true;
   else legend.textContent =
-    `rel ${P.rel}${P.rel === "knn" ? " k " + P.k : ""}   forces ${+P.forces}   fade ${+P.fade}   tracker ${+P.tracker}   trails ${+P.trails}   curve ${P.curve}${P.curve ? " " + P.curvemode : ""}   seed ${P.seed}`;
+    `rel ${P.rel}${P.rel === "knn" ? " k " + P.k : ""}   forces ${+P.forces}   fade ${+P.fade}   tracker ${+P.tracker}   trails ${+P.trails}   curve ${P.curve}${P.curve ? " " + P.curvemode : ""}${P.path ? "   path spline t " + P.tension + "  handles " + (+P.handles) + "  net " + P.net : ""}   seed ${P.seed}`;
 
   // Parâmetros visuais da peça
   const MARGIN = 80, BASE_R = 8, LABEL = 10, LABEL_OFF = 16;
@@ -342,6 +354,85 @@
       p.pop();
     }
 
+    // ---------- linha contínua ----------
+
+    // Segmentos tracejados ou contínuos de qualquer curva amostrada em pontos,
+    // sempre como traços curtos independentes (padrão 8 / 5, como no original).
+    function strokeSampled(pts, dashed) {
+      const ctx = p.drawingContext;
+      if (!dashed) {
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.stroke();
+        return;
+      }
+      let carry = 0, on = true;
+      for (let i = 1; i < pts.length; i++) {
+        let [sx, sy] = pts[i - 1];
+        const [x, y] = pts[i];
+        let rem = Math.hypot(x - sx, y - sy);
+        const ux = rem ? (x - sx) / rem : 0, uy = rem ? (y - sy) / rem : 0;
+        while (rem > 0) {
+          const need = (on ? 8 : 5) - carry;
+          const step = Math.min(need, rem);
+          const ex = sx + ux * step, ey = sy + uy * step;
+          if (on) { ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke(); }
+          sx = ex; sy = ey; rem -= step; carry += step;
+          if (carry >= (on ? 8 : 5) - 1e-6) { carry = 0; on = !on; }
+        }
+      }
+    }
+
+    function cubicPoints(a, c1, c2, b, n) {
+      const out = [];
+      for (let i = 0; i <= n; i++) {
+        const t = i / n, u = 1 - t;
+        out.push([
+          u * u * u * a.x + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * b.x,
+          u * u * u * a.y + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * b.y
+        ]);
+      }
+      return out;
+    }
+
+    // Uma linha que passa por todas as palavras por ordem de chegada. Cada
+    // troço é contínuo se as duas palavras vêm do mesmo país e tracejado se não.
+    function drawPath() {
+      const ctx = p.drawingContext;
+      const ns = nodes;
+      if (ns.length < 2) return;
+      const k = P.tension / 6;
+      ctx.lineWidth = 0.9;
+      ctx.strokeStyle = "rgba(255,255,255,0.95)";
+      const handles = [];
+      for (let i = 0; i + 1 < ns.length; i++) {
+        const p0 = ns[Math.max(0, i - 1)], p1 = ns[i], p2 = ns[i + 1], p3 = ns[Math.min(ns.length - 1, i + 2)];
+        const c1 = [p1.x + (p2.x - p0.x) * k, p1.y + (p2.y - p0.y) * k];
+        const c2 = [p2.x - (p3.x - p1.x) * k, p2.y - (p3.y - p1.y) * k];
+        const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        const pts = cubicPoints(p1, c1, c2, p2, Math.max(12, Math.ceil(len / 10)));
+        strokeSampled(pts, p1.country !== p2.country);
+        handles.push([p1, c1], [p2, c2]);
+      }
+      if (P.handles) {
+        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = "rgba(255,255,255,0.6)";
+        for (const [n, c] of handles) {
+          ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(c[0], c[1]); ctx.stroke();
+          ctx.beginPath(); ctx.arc(c[0], c[1], 1.8, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+    }
+
+    function drawCoords() {
+      p.push();
+      p.noStroke(); p.fill(255, 210);
+      p.textSize(8); p.textAlign(p.LEFT, p.TOP);
+      for (const n of nodes) p.text(`${n.x.toFixed(0)} ${n.y.toFixed(0)}`, n.x + 7, n.y + 4);
+      p.pop();
+    }
+
     // ---------- ciclo ----------
 
     p.setup = async () => {
@@ -369,8 +460,14 @@
       grid();
       const es = P.rel === "knn" ? knnEdges() : edges;
       if (P.forces) applyForces(es);
-      drawEdges(es);
+      if (P.net !== "0") {
+        if (P.net === "faint") p.drawingContext.globalAlpha = 0.28;
+        drawEdges(es);
+        p.drawingContext.globalAlpha = 1;
+      }
+      if (P.path) drawPath();
       for (const n of nodes) { n.update(); n.display(); }
+      if (P.coords) drawCoords();
       if (P.tracker && nodes.length) drawTracker();
     };
 
