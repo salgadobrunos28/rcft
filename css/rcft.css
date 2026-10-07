@@ -322,7 +322,7 @@ body.form {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  padding: 0 calc(16px) 0 calc(16px);
+  padding: 0;
 }
 
 .form-head h1 {
@@ -377,7 +377,8 @@ body.form {
   appearance: none;
 }
 
-.field textarea { min-height: 38px; height: 38px; resize: vertical; }
+/* As caixas de texto crescem com a resposta (js/contribute.js). */
+.field textarea { min-height: 38px; height: 38px; resize: none; overflow: hidden; }
 
 .field input:focus,
 .field textarea:focus {
@@ -408,4 +409,33 @@ body.form {
 @media (min-width: 768px) {
   .field input,
   .field textarea { font-size: 12px; }
+}
+
+/*
+  Telemóvel: o formulário inteiro, com o botão, cabe no ecrã sem scroll
+  (iPhone 13 com as barras do Safari: cerca de 390 x 525 px visíveis).
+*/
+@media (max-width: 767px) {
+  .form-wrap {
+    padding:
+      calc(18px + env(safe-area-inset-top))
+      calc(16px + env(safe-area-inset-right))
+      calc(20px + env(safe-area-inset-bottom))
+      calc(16px + env(safe-area-inset-left));
+  }
+
+  .form-head h1 { font-size: 14px; }
+  .form-head .intro { margin-top: 6px; font-size: 11px; line-height: 1.35; }
+  .close { width: 14px; height: 14px; margin-top: 1px; }
+
+  #rcft-form { margin-top: 18px; }
+  .field { margin-bottom: 12px; }
+  .field label { margin-bottom: 4px; font-size: 9px; line-height: 1.25; }
+
+  .field input,
+  .field textarea { padding: 5px 8px; line-height: 1.25; }
+
+  .field textarea { min-height: 32px; height: 32px; }
+
+  .form-actions { margin-top: 16px; }
 }

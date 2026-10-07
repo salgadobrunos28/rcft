@@ -50,6 +50,15 @@
     if (EMBEDDED) close.target = "_top";
   }
 
+  // As caixas de texto crescem com o que se escreve, até um limite.
+  const TEXTAREA_MAX = 140;
+  function grow(t) {
+    t.style.height = "auto";
+    t.style.height = Math.min(TEXTAREA_MAX, t.scrollHeight + 2) + "px";
+    t.style.overflowY = t.scrollHeight + 2 > TEXTAREA_MAX ? "auto" : "hidden";
+  }
+  form.querySelectorAll("textarea").forEach(t => t.addEventListener("input", () => grow(t)));
+
   function say(text) {
     status.textContent = text;
   }
@@ -105,6 +114,7 @@
 
     D.addPending(params.get("oneword"), params.get("country"));
     form.reset();
+    form.querySelectorAll("textarea").forEach(t => { t.style.height = ""; t.style.overflowY = ""; });
     say("Thank you. Your response has been added to the cartography.");
     setTimeout(goHome, BACK_TO_MAP_MS);
   });
