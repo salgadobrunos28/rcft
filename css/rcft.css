@@ -71,7 +71,6 @@ body.map {
 }
 
 #about p { margin: 0; }
-#about p + p { margin-top: calc(16px * var(--s)); }
 
 #legend {
   left: calc(44px * var(--s) - var(--pad));
@@ -213,7 +212,6 @@ html[data-mode="install"] #contribute { display: none; }
     line-height: 14px;
   }
 
-  #about p + p { margin-top: 14px; }
 
   #legend,
   #coords {
