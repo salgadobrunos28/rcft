@@ -81,15 +81,11 @@
   window.addEventListener("rcft:sync", e => {
     const d = e.detail, t = d.time;
     $("ui-sync").textContent = `${z(t.getHours())}:${z(t.getMinutes())}:${z(t.getSeconds())}`;
-    const status = document.querySelector(".collar-status");
-    status.classList.toggle("offline", !d.ok);
-    $("ui-state").textContent = d.ok ? "Live" : "Offline, cached";
+    document.querySelector(".collar-status").classList.toggle("offline", !d.ok);
   });
 
-  // Em telemóvel: texto fechado e só as cinco entradas mais recentes.
-  const about = document.querySelector(".c-about");
+  // Em telemóvel: só as cinco entradas mais recentes.
   if (window.innerWidth < 768) {
-    if (about) about.removeAttribute("open");
     const coords = document.getElementById("coords");
     if (coords) coords.dataset.lines = "5";
   }

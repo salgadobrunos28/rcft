@@ -8,8 +8,8 @@
   <meta name="description" content="A generative system that traces the shifting relations between words, people and territories. The work invites each visitor to define in a single word what a border is.">
   <meta name="theme-color" content="#0018ff">
   <link rel="stylesheet" href="vendor/fonts/fragment-mono.css">
-  <link rel="stylesheet" href="css/rcft.css?v=24">
-  <link rel="stylesheet" href="css/ui.css?v=24">
+  <link rel="stylesheet" href="css/rcft.css?v=25">
+  <link rel="stylesheet" href="css/ui.css?v=25">
 </head>
 <!--
   Pré-visualização da nova interface do site (folha de mapa).
@@ -20,8 +20,7 @@
   <svg id="sheet" aria-hidden="true"></svg>
 
   <header class="collar">
-    <span class="collar-id">RCFT</span>
-    <span class="collar-status"><span class="live" aria-hidden="true"></span><span id="ui-state">Live</span><span id="ui-sync">--:--:--</span></span>
+    <span class="collar-status"><span id="ui-sync">--:--:--</span></span>
   </header>
 
   <aside class="cartouche" aria-label="About the work">
@@ -30,19 +29,18 @@
       <span class="c-meta">2026</span>
     </div>
 
-    <details class="c-about" open>
-      <summary>About</summary>
+    <div class="c-about">
       <p>A generative system that traces the shifting relations between words, people and territories. The work invites each visitor to define in a single word what a border is.</p>
       <p>Every answer becomes a node in a drifting field, where meanings move closer and apart without settling into a definition.</p>
       <p>The piece adopts the visual grammar of data and surveillance systems but refuses their function, it accumulates language without turning it into actionable knowledge.</p>
-    </details>
+    </div>
 
-    <dl class="c-stats">
-      <div><dt>Responses</dt><dd id="st-responses">--</dd></div>
-      <div><dt>Words</dt><dd id="st-words">--</dd></div>
-      <div><dt>Origins</dt><dd id="st-origins">--</dd></div>
-      <div class="c-wide"><dt>Last entry</dt><dd id="st-last">--</dd></div>
-    </dl>
+    <ul class="c-stats" aria-label="Corpus">
+      <li><span class="c-n" id="st-responses">--</span>responses</li>
+      <li><span class="c-n" id="st-words">--</span>words</li>
+      <li><span class="c-n" id="st-origins">--</span>origins</li>
+      <li class="c-wide"><span id="st-last">--</span>last entry</li>
+    </ul>
 
     <ul class="c-legend" aria-label="Legend">
       <li><svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>single response</li>
@@ -62,12 +60,12 @@
   <div id="qr" hidden><div id="qr-frame"><div id="qr-code"></div></div><div id="qr-label"><span></span><span id="qr-coords"></span></div></div>
   <pre id="debug" hidden></pre>
 
-  <script>window.RCFT_VERSION = 24;</script>
-  <script src="js/config.js?v=24"></script>
-  <script src="js/data.js?v=24"></script>
+  <script>window.RCFT_VERSION = 25;</script>
+  <script src="js/config.js?v=25"></script>
+  <script src="js/data.js?v=25"></script>
   <script src="vendor/p5-1.9.0.min.js"></script>
   <script src="vendor/qrcode-generator-1.4.4.js"></script>
-  <script src="js/ui.js?v=24"></script>
-  <script src="js/sketch.js?v=24"></script>
+  <script src="js/ui.js?v=25"></script>
+  <script src="js/sketch.js?v=25"></script>
 </body>
 </html>
