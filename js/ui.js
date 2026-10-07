@@ -27,9 +27,7 @@
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     svg.textContent = "";
 
-    const rect = el("rect", { class: "neat", x: m + 0.5, y: m + 0.5, width: W - 2 * m - 1, height: H - 2 * m - 1 });
-    svg.style.setProperty("--perim", String(2 * (W + H)));
-    rect.style.setProperty("--perim", String(2 * (W + H)));
+    el("rect", { class: "neat", x: m + 0.5, y: m + 0.5, width: W - 2 * m - 1, height: H - 2 * m - 1 });
 
     const len = narrow ? 3 : 5;
     const labelEvery = 2 * GRID;
