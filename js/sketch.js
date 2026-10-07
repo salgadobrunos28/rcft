@@ -3,10 +3,14 @@
   p5.js em modo instância. O texto da interface está no HTML (index.html)
   e funciona como zona de exclusão: os nós não entram nos painéis de texto.
 
-  Parâmetros de URL:
-    ?mode=install   modo instalação (sem cursor, sem botão, com QR code)
+  Duas páginas usam este sketch:
+    index.html          site (web e telemóvel), com o botão para o formulário
+    installation.html   instalação: sem botão nem cursor, com QR code
+
+  Parâmetros de URL (opcionais):
     ?scale=1.5      escala da interface e do desenho (ecrãs grandes)
     ?qr=0 / ?qr=1   esconde ou mostra o QR code
+    ?mode=install   equivale a abrir installation.html
 
   Teclas:
     espaço  pausa a deriva
@@ -19,11 +23,12 @@
   const D = window.RCFT_DATA;
 
   const params = new URLSearchParams(location.search);
-  const MODE = params.get("mode") === "install" ? "install" : "web";
+  const MODE = window.RCFT_MODE === "install" || params.get("mode") === "install" ? "install" : "web";
   const SCALE = clampNum(parseFloat(params.get("scale")), 0.5, 4, 1);
   const SHOW_QR = MODE === "install" ? params.get("qr") !== "0" : params.get("qr") === "1";
 
   document.documentElement.dataset.mode = MODE;
+  if (MODE === "install") document.title = "Relational Cartography (rcft) - Installation";
   document.documentElement.style.setProperty("--s", String(SCALE));
 
   // Parâmetros visuais (iguais à versão original, multiplicados pela escala)
@@ -343,15 +348,16 @@
 
     function buildQR() {
       if (!SHOW_QR || typeof window.qrcode !== "function") return;
-      const url = C.CONTRIBUTE_URL || new URL("contribute.html", location.href).href;
+      const url = C.QR_URL || new URL("./", location.href).href;
       const qr = window.qrcode(0, "M");
       qr.addData(url);
       qr.make();
-      el.qrCode.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 3, scalable: true });
+      el.qrCode.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 4, scalable: true });
       const svg = el.qrCode.querySelector("svg");
       if (svg) {
         svg.querySelectorAll("rect").forEach(r => r.setAttribute("fill", "#ffffff"));
-        svg.querySelectorAll("path").forEach(path => path.setAttribute("fill", "rgb(0,24,255)"));
+        svg.querySelectorAll("path").forEach(path => path.setAttribute("fill", "#000000"));
+        svg.setAttribute("shape-rendering", "crispEdges");
         svg.setAttribute("aria-label", "QR code: " + url);
         svg.setAttribute("role", "img");
       }

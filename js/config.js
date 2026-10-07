@@ -23,7 +23,7 @@ window.RCFT_CONFIG = {
   // Tempo máximo de espera por uma resposta do Apps Script (ms).
   FETCH_TIMEOUT_MS: 25000,
 
-  // Endereço do formulário usado no QR code do modo instalação.
-  // null = calcula a partir do endereço onde a peça está alojada.
-  CONTRIBUTE_URL: null
+  // Endereço para onde aponta o QR code da instalação
+  // (o mesmo do QR code que estava no rcinstallation.cargo.site).
+  QR_URL: "https://rcft.cargo.site/"
 };

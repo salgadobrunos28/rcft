@@ -158,22 +158,17 @@ body.map {
   outline: none;
 }
 
+/* QR code da instalação: canto inferior esquerdo, por cima da legenda */
 #qr {
-  left: 50%;
-  bottom: calc(28px * var(--s));
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(8px * var(--s));
-  font-size: calc(10px * var(--s));
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  left: calc(41px * var(--s) - var(--pad));
+  bottom: calc(139px * var(--s) - var(--pad));
 }
 
 #qr-code {
-  width: calc(96px * var(--s));
-  height: calc(96px * var(--s));
+  width: calc(82px * var(--s));
+  height: calc(82px * var(--s));
+  padding: calc(5px * var(--s));
+  border-radius: calc(8px * var(--s));
   background: var(--fg);
 }
 

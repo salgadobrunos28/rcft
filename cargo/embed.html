@@ -1,12 +1,22 @@
 <!--
-  Cargo: conteúdo da página principal (modo HTML).
-  Na página "contribute", usar o mesmo bloco com
-  src="https://salgadobrunos28.github.io/rcft/contribute.html"
+  Cargo: um iframe por página, em modo HTML.
+
+  rcft.cargo.site, página principal:
+    <iframe class="rcft-frame" src="https://salgadobrunos28.github.io/rcft/" title="Relational Cartography" allow="fullscreen"></iframe>
+
+  rcft.cargo.site, página "contribute" (mantém a funcionar links e QR codes antigos):
+    <iframe class="rcft-frame" src="https://salgadobrunos28.github.io/rcft/contribute.html" title="Relational Cartography: contribute"></iframe>
+
+  rcinstallation.cargo.site, página principal:
+    <iframe class="rcft-frame" src="https://salgadobrunos28.github.io/rcft/installation.html" title="Relational Cartography: installation" allow="fullscreen"></iframe>
+
+  No computador da instalação é preferível abrir diretamente
+  https://salgadobrunos28.github.io/rcft/installation.html
+  (com ?scale=1.5 ou outro valor se o texto ficar pequeno no ecrã).
 -->
-<iframe class="rcft-frame" src="https://salgadobrunos28.github.io/rcft/" title="Relational Cartography" allow="fullscreen"></iframe>
 
 <!--
-  Cargo: CSS da página (Local CSS) ou CSS do site.
+  CSS (Local CSS da página, ou CSS do site):
 
 .rcft-frame {
   position: fixed;

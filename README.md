@@ -4,12 +4,14 @@ Participatory generative cartography. Each visitor is asked to define in a singl
 
 Bruno Mesquita, 2026. p5.js, screen, steel.
 
-Live: https://salgadobrunos28.github.io/rcft/ (embedded at https://rcft.cargo.site)
+- Website (web and mobile): https://salgadobrunos28.github.io/rcft/, embedded at https://rcft.cargo.site
+- Installation: https://salgadobrunos28.github.io/rcft/installation.html, embedded at https://rcinstallation.cargo.site
 
 ## Structure
 
 ```
-index.html          the cartography
+index.html          the cartography (website)
+installation.html   the cartography in installation mode
 contribute.html     the contribution form
 css/rcft.css        all styles
 js/config.js        endpoints and timings (the file you normally edit)
@@ -25,11 +27,13 @@ vendor/             p5.js 1.9.0 (LGPL-2.1) and qrcode-generator 1.4.4 (MIT)
 
 | Parameter | Effect |
 |---|---|
-| `?mode=install` | installation mode: no cursor, no button, QR code to the form |
 | `?scale=1.5` | scales text, nodes and lines (large screens) |
 | `?qr=0` / `?qr=1` | hide or show the QR code |
+| `?mode=install` | same as opening `installation.html` |
 
-Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/?mode=install&scale=1.5`
+Installation mode hides the cursor and the contribute button and shows a QR code (bottom left, above the legend) pointing to `QR_URL` in `js/config.js`.
+
+Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/installation.html?scale=1.5`
 
 ## Keys
 
