@@ -4,8 +4,6 @@ Relational Cartography is a generative system that traces the shifting relations
 
 Bruno Mesquita, 2026. p5.js, screen, steel.
 
-- Website (web and mobile): https://salgadobrunos28.github.io/rcft/, embedded at https://rcft.cargo.site
-- Installation: https://salgadobrunos28.github.io/rcft/installation.html, embedded at https://rcinstallation.cargo.site
 
 ## Structure
 
