@@ -361,7 +361,8 @@
         `edges      ${sameEdges.length + diffEdges.length} (same ${sameEdges.length} / different ${diffEdges.length})`,
         `last sync  ${t}`,
         `error      ${lastError || "-"}`,
-        `fps        ${Math.round(p.frameRate())}`
+        `fps        ${Math.round(p.frameRate())}`,
+        `version    ${window.RCFT_VERSION || "-"}`
       ].join("\n");
     }
 
@@ -420,6 +421,35 @@
       if (coords) coords.textContent = `input -> ${x.toFixed(1)} , ${y.toFixed(1)}`;
     }
 
+    // ---------- Atualização automática ----------
+
+    /*
+      O GitHub Pages deixa os browsers guardarem as páginas até 10 minutos, e
+      numa instalação ou num iframe ninguém força o recarregamento. A página
+      compara a sua versão com version.json (pedido sem cache) e, se houver uma
+      mais recente, recarrega-se com ?v= novo, que obriga a ir buscar tudo de novo.
+      Só tenta uma vez por versão, para nunca entrar em ciclo.
+    */
+    const VERSION_CHECK_MS = 5 * 60 * 1000;
+
+    async function checkVersion() {
+      const mine = Number(window.RCFT_VERSION || 0);
+      try {
+        const res = await fetch("version.json?t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) return;
+        const latest = Number((await res.json()).v || 0);
+        if (!(latest > mine)) return;
+        const key = "rcft-reload-" + latest;
+        try {
+          if (sessionStorage.getItem(key)) return;
+          sessionStorage.setItem(key, "1");
+        } catch (_) { /* sem armazenamento: recarrega na mesma */ }
+        const url = new URL(location.href);
+        url.searchParams.set("v", String(latest));
+        location.replace(url.href);
+      } catch (_) { /* sem rede: tenta na próxima verificação */ }
+    }
+
     // ---------- Ciclo p5 ----------
 
     p.setup = () => {
@@ -450,6 +480,8 @@
       refresh();
       setInterval(refresh, C.REFRESH_MS);
       setInterval(updateDebug, 500);
+      setTimeout(checkVersion, 2000);
+      setInterval(checkVersion, VERSION_CHECK_MS);
       document.addEventListener("visibilitychange", () => {
         if (!document.hidden) refresh();
       });

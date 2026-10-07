@@ -50,7 +50,7 @@ Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/insta
 
 ## Updating
 
-GitHub Pages publishes about a minute after each push. Browsers keep CSS and JS for up to ten minutes, so when changing files in `css/` or `js/`, raise the `?v=` number on their tags in `index.html` and `contribute.html`.
+GitHub Pages publishes about a minute after each push, and browsers may keep the pages for up to ten minutes. Before committing a change, run `sh tools/bump-version.sh`: it raises the number in `version.json`, `window.RCFT_VERSION` and the `?v=` tags. Open pages, including the installation screen and the Cargo iframes, check `version.json` on load and every five minutes and reload themselves when a newer version exists.
 
 ## Apps Script
 
