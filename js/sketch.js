@@ -1,7 +1,7 @@
 /*
   Relational Cartography (rcft): sketch
-  p5.js em modo instância. O texto da interface está no HTML (index.html)
-  e funciona como zona de exclusão: os nós não entram nos painéis de texto.
+  p5.js em modo instância. O texto da interface está no HTML (index.html),
+  transparente, por cima do canvas: os nós e as linhas veem-se por baixo dele.
 
   Duas páginas usam este sketch:
     index.html          site (web e telemóvel), com o botão para o formulário
@@ -38,22 +38,17 @@
   const LABEL_OFFSET = 16 * SCALE;
   const GRID_SPACING = 80;
   const NEW_RING_MS = 4000;     // anel que assinala uma palavra nova
-  const ZONE_PAD = 4 * SCALE;   // folga à volta dos painéis de texto
 
   const el = {
     coords: document.getElementById("coords"),
     debug: document.getElementById("debug"),
     qr: document.getElementById("qr"),
-    qrCode: document.getElementById("qr-code"),
-    panels: ["title", "about", "legend", "coords", "contribute", "qr"]
-      .map(id => document.getElementById(id))
-      .filter(Boolean)
+    qrCode: document.getElementById("qr-code")
   };
 
   let nodes = [];
   let sameEdges = [];
   let diffEdges = [];
-  let zones = [];
   let paused = false;
   let firstLoadDone = false;
   let loading = false;
@@ -148,46 +143,9 @@
       };
     }
 
-    function computeZones() {
-      zones = [];
-      for (const node of el.panels) {
-        if (node.hidden) continue;
-        const r = node.getBoundingClientRect();
-        if (r.width === 0 || r.height === 0) continue;
-        zones.push({
-          x0: r.left - ZONE_PAD,
-          y0: r.top - ZONE_PAD,
-          x1: r.right + ZONE_PAD,
-          y1: r.bottom + ZONE_PAD
-        });
-      }
-    }
-
-    // Mantém o nó (círculo e etiqueta) fora dos painéis e dentro das margens.
+    // Os nós atravessam livremente as zonas de texto, como na versão original.
     function keepInside(n) {
       const b = bounds(n);
-      const inB = (x, y) => x >= b.minX && x <= b.maxX && y >= b.minY && y <= b.maxY;
-      const halfW = Math.max(n.radius() / 2, n.lw / 2) + 3 * SCALE;
-      const up = LABEL_OFFSET + labelSize / 2 + 3 * SCALE;
-      const down = n.radius() / 2 + 3 * SCALE;
-
-      for (const z of zones) {
-        const left = n.x - halfW, right = n.x + halfW;
-        const top = n.y - up, bottom = n.y + down;
-        if (right <= z.x0 || left >= z.x1 || bottom <= z.y0 || top >= z.y1) continue;
-
-        const options = [
-          { dx: z.x0 - right, dy: 0 },
-          { dx: z.x1 - left, dy: 0 },
-          { dx: 0, dy: z.y0 - bottom },
-          { dx: 0, dy: z.y1 - top }
-        ].sort((a, c) => (Math.abs(a.dx) + Math.abs(a.dy)) - (Math.abs(c.dx) + Math.abs(c.dy)));
-
-        const valid = options.find(o => inB(n.x + o.dx, n.y + o.dy)) || options[0];
-        n.x += valid.dx;
-        n.y += valid.dy;
-      }
-
       n.x = p.constrain(n.x, b.minX, b.maxX);
       n.y = p.constrain(n.y, b.minY, b.maxY);
     }
@@ -196,12 +154,11 @@
       const b = bounds(n);
       n.x = p.random(b.minX, b.maxX);
       n.y = p.random(b.minY, b.maxY);
-      keepInside(n);
     }
 
     function applyResponsive() {
       isMobile = window.innerWidth < 768;
-      margin = (isMobile ? 16 : 80) * SCALE;
+      margin = (isMobile ? 6 : 80) * SCALE;
       baseRadius = (isMobile ? 7 : 8) * SCALE;
       labelSize = (isMobile ? 9 : 10) * SCALE;
       coordLines = isMobile ? 8 : 10;
@@ -298,24 +255,39 @@
       p.pop();
     }
 
-    // Todas as arestas num só traço por tipo, com tracejado nativo do canvas.
+    // Arestas desenhadas como na versão original: cada linha e cada traço do
+    // tracejado é um segmento curto e independente. No Chrome com aceleração
+    // gráfica isto é bastante mais rápido do que um só caminho longo ou do que
+    // o tracejado nativo do canvas (setLineDash), que testei e engasgava o desenho.
     function drawEdges() {
       const ctx = p.drawingContext;
-      ctx.save();
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 0.3 * SCALE;
-
-      ctx.beginPath();
-      for (const [a, b] of sameEdges) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
       ctx.setLineDash([]);
-      ctx.stroke();
 
-      ctx.beginPath();
-      for (const [a, b] of diffEdges) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
-      ctx.setLineDash([8 * SCALE, 5 * SCALE]);
-      ctx.stroke();
+      for (const [a, b] of sameEdges) {
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
 
-      ctx.restore();
+      const dash = 8 * SCALE;
+      const step = 13 * SCALE; // traço de 8 + intervalo de 5
+      for (const [a, b] of diffEdges) {
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const len = Math.hypot(dx, dy);
+        if (!len) continue;
+        const ux = dx / len, uy = dy / len;
+        for (let t = 0; t < len; t += step) {
+          const s = Math.min(dash, len - t);
+          const sx = a.x + ux * t, sy = a.y + uy * t;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + ux * s, sy + uy * s);
+          ctx.stroke();
+        }
+      }
     }
 
     let lastCoordsAt = 0;
@@ -382,7 +354,6 @@
       buildQR();
       if (params.get("debug") === "1") el.debug.hidden = false;
       applyResponsive();
-      computeZones();
 
       // Mostra logo a última versão guardada; a rede atualiza a seguir.
       const cached = D.loadCache();
@@ -391,7 +362,7 @@
 
       refresh();
       setInterval(refresh, C.REFRESH_MS);
-      setInterval(() => { computeZones(); updateDebug(); }, 500);
+      setInterval(updateDebug, 500);
       document.addEventListener("visibilitychange", () => {
         if (!document.hidden) refresh();
       });
@@ -401,7 +372,6 @@
       const ow = p.width, oh = p.height;
       p.resizeCanvas(window.innerWidth, window.innerHeight);
       applyResponsive();
-      computeZones();
       for (const n of nodes) {
         n.x = n.x / ow * p.width;
         n.y = n.y / oh * p.height;

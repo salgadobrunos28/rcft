@@ -38,16 +38,20 @@ body.map {
   display: block;
 }
 
-/* Os painéis têm o fundo azul: as linhas do grafo passam por baixo do texto. */
+/* Texto transparente por cima do canvas: os nós e as linhas veem-se por baixo,
+   como na versão original. Os painéis não captam o rato, exceto o botão. */
 .panel {
   position: fixed;
   z-index: 2;
   margin: 0;
   padding: var(--pad);
-  background: var(--blue);
+  background: transparent;
   color: var(--fg);
   font-weight: normal;
+  pointer-events: none;
 }
+
+#contribute { pointer-events: auto; }
 
 #title {
   left: calc(40px * var(--s) - var(--pad));
@@ -132,7 +136,7 @@ body.map {
   padding: calc(8px * var(--s)) calc(16px * var(--s));
   border: 1px solid var(--fg);
   color: var(--fg);
-  background: var(--blue);
+  background: transparent;
   font-family: var(--font);
   font-size: calc(10px * var(--s));
   line-height: 1.2;
