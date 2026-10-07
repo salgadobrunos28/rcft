@@ -31,6 +31,10 @@ window.RCFT_CONFIG = {
   // é para aqui que volta depois do envio e quando se fecha o formulário.
   SITE_URL: "https://rcft.cargo.site/",
 
+  // Página das perguntas no Cargo. Quando o mapa está dentro do Cargo, o botão
+  // "Contribute a response" abre esta página na janela inteira.
+  CONTRIBUTE_PAGE: "https://rcft.cargo.site/contribute",
+
   // Aspeto do QR code: "inverted" (branco sobre o azul) ou "light" (preto sobre branco).
   QR_STYLE: "inverted"
 };

@@ -31,6 +31,12 @@
   const SHOW_QR = MODE === "install" ? params.get("qr") !== "0" : params.get("qr") === "1";
 
   document.documentElement.dataset.mode = MODE;
+
+  // Dentro do Cargo, o botão abre a página das perguntas do rcft.cargo.site.
+  if (window.top !== window.self && C.CONTRIBUTE_PAGE) {
+    const btn = document.getElementById("contribute");
+    if (btn) { btn.href = C.CONTRIBUTE_PAGE; btn.target = "_top"; }
+  }
   if (MODE === "install") document.title = "Relational Cartography (rcft) - Installation";
   document.documentElement.style.setProperty("--s", String(SCALE));
 
