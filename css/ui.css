@@ -84,6 +84,18 @@ html[data-ui="sheet"] body { font-family: var(--mono); }
 .cartouche > * { padding: 10px 12px; }
 .cartouche > * + * { border-top: 1px solid var(--line); }
 
+/* Título e texto: caixa expansível, fechada por omissão; abre ao clicar no título. */
+.cartouche > .c-box { padding: 0; }
+.c-box > summary { padding: 10px 12px; list-style: none; cursor: pointer; pointer-events: auto; }
+.c-box > summary::-webkit-details-marker { display: none; }
+.c-box > .c-about { padding: 10px 12px; border-top: 1px solid var(--line); }
+.c-box > summary:hover .c-title,
+.c-box > summary:focus-visible .c-title { text-decoration: underline; text-underline-offset: 3px; }
+.c-box > summary:focus-visible { outline: none; }
+.c-toggle { display: inline-block; width: 1ch; margin-left: 10px; color: #fff; }
+.c-toggle::before { content: "+"; }
+.c-box[open] .c-toggle::before { content: "-"; }
+
 .c-head {
   display: flex;
   justify-content: space-between;
