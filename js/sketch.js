@@ -479,24 +479,6 @@
     */
     const VERSION_CHECK_MS = 5 * 60 * 1000;
 
-    async function checkVersion() {
-      const mine = Number(window.RCFT_VERSION || 0);
-      try {
-        const res = await fetch("version.json?t=" + Date.now(), { cache: "no-store" });
-        if (!res.ok) return;
-        const latest = Number((await res.json()).v || 0);
-        if (!(latest > mine)) return;
-        const key = "rcft-reload-" + latest;
-        try {
-          if (sessionStorage.getItem(key)) return;
-          sessionStorage.setItem(key, "1");
-        } catch (_) { /* sem armazenamento: recarrega na mesma */ }
-        const url = new URL(location.href);
-        url.searchParams.set("v", String(latest));
-        location.replace(url.href);
-      } catch (_) { /* sem rede: tenta na próxima verificação */ }
-    }
-
     // ---------- Ciclo p5 ----------
 
     p.setup = () => {
@@ -528,8 +510,8 @@
       refresh();
       setInterval(refresh, C.REFRESH_MS);
       setInterval(updateDebug, 500);
-      setTimeout(checkVersion, 2000);
-      setInterval(checkVersion, VERSION_CHECK_MS);
+      setTimeout(D.checkVersion, 2000);
+      setInterval(D.checkVersion, VERSION_CHECK_MS);
       document.addEventListener("visibilitychange", () => {
         if (!document.hidden) refresh();
       });

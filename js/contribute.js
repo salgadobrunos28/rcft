@@ -59,6 +59,9 @@
   }
   form.querySelectorAll("textarea").forEach(t => t.addEventListener("input", () => grow(t)));
 
+  // Versão nova publicada: recarrega antes de a pessoa começar a escrever.
+  D.checkVersion();
+
   function say(text) {
     status.textContent = text;
   }

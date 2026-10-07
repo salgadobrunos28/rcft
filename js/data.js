@@ -167,7 +167,32 @@
     return loadPending().filter(pnd => now - pnd.ts < ms).map(pnd => pnd.word.toLowerCase());
   }
 
+  /*
+    Atualização automática: o GitHub Pages deixa os browsers guardarem as
+    páginas até 10 minutos. A página compara a sua versão com version.json
+    (sem cache) e, se houver uma mais recente, recarrega-se com ?v= novo.
+    Só tenta uma vez por versão, para nunca entrar em ciclo.
+  */
+  async function checkVersion() {
+    const mine = Number(window.RCFT_VERSION || 0);
+    try {
+      const res = await fetch("version.json?t=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) return;
+      const latest = Number((await res.json()).v || 0);
+      if (!(latest > mine)) return;
+      const key = "rcft-reload-" + latest;
+      try {
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, "1");
+      } catch (_) { /* sem armazenamento: recarrega na mesma */ }
+      const url = new URL(location.href);
+      url.searchParams.set("v", String(latest));
+      location.replace(url.href);
+    } catch (_) { /* sem rede: tenta na próxima verificação */ }
+  }
+
   window.RCFT_DATA = {
+    checkVersion,
     fetchRows, loadCache, parseRows, normCountry,
     addPending, withPending, recentPendingWords
   };
