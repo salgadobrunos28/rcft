@@ -1,0 +1,289 @@
+/*
+  Relational Cartography (rcft): interface do site como folha de mapa.
+
+  Sistema:
+  - Moldura (neatline) a --m das bordas, com a graduação da grelha de 80 px
+    marcada nas margens, como numa carta topográfica (js/ui.js desenha-a).
+  - Margem superior (colar): identificação à esquerda, estado da ligação à direita.
+  - Uma única cartouche (bloco de título) no canto inferior esquerdo da moldura
+    com tudo o que explica a peça: título, texto, totais, legenda e botão.
+  - Uma leitura de dados (últimas entradas) no canto inferior direito.
+  Todo o texto é Fragment Mono (desenho de base Helvetica, em monoespaçado).
+  Os blocos são transparentes: as palavras e as linhas veem-se por baixo.
+*/
+
+html[data-ui="sheet"] {
+  --m: 32px;          /* distância da moldura às bordas */
+  --in: 16px;         /* distância dos blocos à moldura */
+  --line: rgba(255, 255, 255, 0.55);
+  --dim: rgba(255, 255, 255, 0.62);
+  --mono: "Fragment Mono", ui-monospace, Menlo, Consolas, monospace;
+  --t-xs: 9px;
+  --t-s: 10px;
+  --t-m: 11px;
+}
+
+html[data-ui="sheet"] body { font-family: var(--mono); }
+
+/* ---------- moldura e graduação ---------- */
+
+#sheet {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+#sheet .neat { fill: none; stroke: var(--line); stroke-width: 1; }
+#sheet .tick { stroke: var(--line); stroke-width: 1; }
+#sheet .tick.major { stroke: #fff; }
+#sheet text {
+  fill: var(--dim);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- colar superior ---------- */
+
+.collar {
+  position: fixed;
+  z-index: 2;
+  top: 0;
+  left: var(--m);
+  right: var(--m);
+  height: var(--m);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.collar-status { display: flex; align-items: center; gap: 10px; color: var(--dim); }
+.collar-status #ui-sync { font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
+
+.live {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+  animation: rcft-blink 2s steps(1, end) infinite;
+}
+
+html[data-ui="sheet"] .offline .live { background: transparent; box-shadow: inset 0 0 0 1px #fff; animation: none; }
+
+@keyframes rcft-blink { 50% { opacity: 0.15; } }
+
+/* ---------- cartouche ---------- */
+
+.cartouche {
+  position: fixed;
+  z-index: 2;
+  left: calc(var(--m) + var(--in));
+  bottom: calc(var(--m) + var(--in));
+  width: 344px;
+  border: 1px solid var(--line);
+  font-size: var(--t-m);
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+.cartouche > * { padding: 10px 12px; }
+.cartouche > * + * { border-top: 1px solid var(--line); }
+
+.c-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.c-title {
+  margin: 0;
+  font-size: var(--t-m);
+  font-weight: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.c-meta { font-size: var(--t-xs); color: var(--dim); letter-spacing: 0.08em; }
+
+.c-about summary {
+  list-style: none;
+  cursor: pointer;
+  pointer-events: auto;
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 6px;
+}
+
+.c-about summary::-webkit-details-marker { display: none; }
+.c-about summary::after { content: " +"; }
+.c-about[open] summary::after { content: " -"; }
+.c-about p { margin: 0; font-size: 10.5px; line-height: 1.55; }
+.c-about p + p { margin-top: 6px; }
+
+.c-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.c-stats div { min-width: 0; }
+.c-stats .c-wide { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; }
+
+.c-stats dt {
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.c-stats dd {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.c-stats .c-wide dd { font-size: var(--t-m); line-height: inherit; }
+
+.c-legend {
+  list-style: none;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  font-size: var(--t-s);
+}
+
+.c-legend li { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.c-legend svg { flex: none; width: 24px; height: 10px; overflow: visible; }
+.c-legend svg[viewBox="0 0 12 12"] { width: 10px; height: 10px; margin: 0 7px; }
+.c-legend circle { fill: none; stroke: #fff; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.c-legend line { stroke: #fff; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.c-legend .pulse { transform-origin: 50% 50%; animation: rcft-pulse 1.57s linear infinite; }
+
+.cartouche #contribute {
+  /* anula as regras do botão antigo em rcft.css */
+  position: static;
+  transform: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 11px 12px;
+  background: transparent;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: var(--t-s);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.cartouche #contribute::after { content: "+"; font-size: 13px; letter-spacing: 0; }
+.cartouche #contribute:hover,
+.cartouche #contribute:focus-visible { background: #fff; color: var(--blue); outline: none; }
+
+/* ---------- leitura de dados ---------- */
+
+.readout {
+  position: fixed;
+  z-index: 2;
+  right: calc(var(--m) + var(--in));
+  bottom: calc(var(--m) + var(--in));
+  width: 236px;
+  font-size: var(--t-s);
+  line-height: 1.8;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+html[data-ui="sheet"] #coords {
+  position: static;
+  padding: 0;
+  font-size: inherit;
+  line-height: inherit;
+  text-align: left;
+  white-space: normal;
+}
+
+.r-row { display: grid; grid-template-columns: 1fr 56px 56px; }
+.r-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-row span:nth-child(2), .r-row span:nth-child(3) { text-align: right; }
+
+.r-head {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ---------- entrada ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  #sheet .neat { stroke-dasharray: var(--perim, 6000); stroke-dashoffset: var(--perim, 6000); animation: rcft-draw 1.4s cubic-bezier(.6, 0, .2, 1) forwards; }
+  .collar, .readout { opacity: 0; animation: rcft-in .6s ease-out .9s forwards; }
+  .cartouche { opacity: 0; animation: rcft-in .6s ease-out .6s forwards; }
+  .cartouche > * { opacity: 0; animation: rcft-in .5s ease-out forwards; }
+  .cartouche > :nth-child(1) { animation-delay: .8s; }
+  .cartouche > :nth-child(2) { animation-delay: .9s; }
+  .cartouche > :nth-child(3) { animation-delay: 1s; }
+  .cartouche > :nth-child(4) { animation-delay: 1.1s; }
+  .cartouche > :nth-child(5) { animation-delay: 1.2s; }
+}
+
+@keyframes rcft-draw { to { stroke-dashoffset: 0; } }
+@keyframes rcft-in { to { opacity: 1; } }
+
+/* ---------- ecrãs estreitos ---------- */
+
+@media (max-width: 767px) {
+  html[data-ui="sheet"] { --m: 10px; --in: 8px; }
+
+  .collar {
+    top: calc(var(--m) + 1px);
+    left: calc(var(--m) + var(--in));
+    right: calc(var(--m) + var(--in));
+    height: 26px;
+  }
+
+  .cartouche {
+    left: calc(var(--m) + var(--in));
+    right: calc(var(--m) + var(--in));
+    bottom: calc(var(--m) + var(--in) + env(safe-area-inset-bottom));
+    width: auto;
+  }
+
+  .cartouche > * { padding: 8px 10px; }
+  .c-about p { font-size: var(--t-s); }
+  .c-stats dd { font-size: 15px; }
+
+  .readout {
+    right: calc(var(--m) + var(--in));
+    bottom: auto;
+    top: calc(var(--m) + 34px);
+    width: 150px;
+    font-size: 8px;
+    line-height: 1.7;
+  }
+
+  .r-row { grid-template-columns: 1fr 34px 34px; }
+  .r-head span:first-child { font-size: 0; }
+  .r-head span:first-child::before { content: "Latest"; font-size: var(--t-xs); }
+}

@@ -185,7 +185,9 @@
 
     function applyResponsive() {
       isMobile = window.innerWidth < 768;
-      margin = (isMobile ? 6 : 80) * SCALE;
+      // Com a interface de folha de mapa, as palavras ficam dentro da moldura.
+      const sheet = document.documentElement.dataset.ui === "sheet";
+      margin = (isMobile ? (sheet ? 30 : 6) : 80) * SCALE;
       baseRadius = (isMobile ? 7 : 8) * SCALE;
       labelSize = (isMobile ? 9 : 10) * SCALE;
       coordLines = isMobile ? 8 : 10;
@@ -251,6 +253,13 @@
       lastSource = source;
       firstLoadDone = true;
       updateCoords(true);
+
+      // Para a interface do site: totais do corpus.
+      const origins = new Set(rows.map(r => D.normCountry(r.country)).filter(Boolean)).size;
+      const lastTs = rows.reduce((m, r) => (r.ts && r.ts > m ? r.ts : m), 0) || null;
+      window.dispatchEvent(new CustomEvent("rcft:data", {
+        detail: { responses: rows.length, words: nodes.length, origins, lastTs, source }
+      }));
     }
 
     function buildEdges() {
@@ -285,6 +294,9 @@
         lastSync = new Date();
         updateCoords(true);
         updateDebug();
+        window.dispatchEvent(new CustomEvent("rcft:sync", {
+          detail: { time: lastSync, ok: !lastError, source: lastSource }
+        }));
       }
     }
 
@@ -467,11 +479,37 @@
         else el.coords.textContent = "";
         return;
       }
+      if (el.coords.dataset.format === "table") { updateCoordsTable(); return; }
       const start = Math.max(0, nodes.length - coordLines);
       el.coords.textContent = nodes
         .slice(start)
         .map(n => `${n.label} -> ${n.x.toFixed(1)} , ${n.y.toFixed(1)}`)
         .join("\n");
+    }
+
+    // Versão em tabela (palavra, x, y): linhas criadas uma vez e atualizadas.
+    let coordRows = [];
+    function updateCoordsTable() {
+      const lines = Math.min(nodes.length, parseInt(el.coords.dataset.lines, 10) || coordLines);
+      if (coordRows.length !== lines) {
+        el.coords.textContent = "";
+        coordRows = [];
+        for (let i = 0; i < lines; i++) {
+          const row = document.createElement("div");
+          row.className = "r-row";
+          const cells = [0, 1, 2].map(() => row.appendChild(document.createElement("span")));
+          el.coords.appendChild(row);
+          coordRows.push(cells);
+        }
+      }
+      const start = nodes.length - lines;
+      for (let i = 0; i < lines; i++) {
+        const n = nodes[start + i];
+        const [w, x, y] = coordRows[i];
+        if (w.textContent !== n.label) w.textContent = n.label;
+        x.textContent = n.x.toFixed(1);
+        y.textContent = n.y.toFixed(1);
+      }
     }
 
     function updateDebug() {
@@ -536,7 +574,8 @@
         el.qr.style.right = (m - frame) + "px";
         el.qr.style.bottom = (m - frame) + "px";
       } else {
-        const anchor = document.getElementById("legend").getBoundingClientRect();
+        const legendEl = document.getElementById("legend") || document.querySelector(".cartouche");
+        const anchor = legendEl ? legendEl.getBoundingClientRect() : { top: p.height - 40 * SCALE };
         x = m;
         y = Math.max(m, anchor.top - 24 * SCALE - size);
         el.qr.style.left = (x - frame) + "px";
