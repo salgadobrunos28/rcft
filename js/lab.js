@@ -12,6 +12,11 @@
     fade=1           opacidade das linhas diminui com o comprimento
     tracker=1        camada de seguimento: caixas que saltam entre palavras
     trails=1         rasto acumulado do percurso de cada palavra
+    curve=0.12       linhas curvas: curvatura máxima em fração do comprimento
+    curvemode=flow|sag|border
+        flow      cada linha ondula devagar, com ruído próprio
+        sag       as linhas descaem como fios suspensos, com ligeira oscilação
+        border    só as linhas entre países diferentes (tracejadas) se curvam
     seed=7           semente (mesmas posições iniciais entre variações)
     hideparams=1     esconde a legenda dos parâmetros
 */
@@ -27,13 +32,15 @@
     fade: q.get("fade") === "1",
     tracker: q.get("tracker") === "1",
     trails: q.get("trails") === "1",
+    curve: Math.max(0, parseFloat(q.get("curve")) || 0),
+    curvemode: ["flow", "sag", "border"].includes(q.get("curvemode")) ? q.get("curvemode") : "flow",
     seed: int(q.get("seed"), 7)
   };
 
   const legend = document.getElementById("lab-params");
   if (q.get("hideparams") === "1") legend.hidden = true;
   else legend.textContent =
-    `rel ${P.rel}${P.rel === "knn" ? " k " + P.k : ""}   forces ${+P.forces}   fade ${+P.fade}   tracker ${+P.tracker}   trails ${+P.trails}   seed ${P.seed}`;
+    `rel ${P.rel}${P.rel === "knn" ? " k " + P.k : ""}   forces ${+P.forces}   fade ${+P.fade}   tracker ${+P.tracker}   trails ${+P.trails}   curve ${P.curve}${P.curve ? " " + P.curvemode : ""}   seed ${P.seed}`;
 
   // Parâmetros visuais da peça
   const MARGIN = 80, BASE_R = 8, LABEL = 10, LABEL_OFF = 16;
@@ -198,23 +205,77 @@
       p.pop();
     }
 
+    // Ponto de controlo da curva (bezier quadrática) de uma linha, ou null se reta.
+    function controlPoint(a, b, same, len) {
+      if (!P.curve) return null;
+      if (P.curvemode === "border" && same) return null;
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const nx = -(b.y - a.y) / len, ny = (b.x - a.x) / len;   // perpendicular
+      const seed = (Math.min(a.idx, b.idx) * 131 + Math.max(a.idx, b.idx) * 17) * 0.37;
+      const t = p.frameCount * 0.004;
+      const wave = (p.noise(seed, t) - 0.5) * 2;                 // -1 .. 1, lento
+      if (P.curvemode === "sag") {
+        // descai na vertical, com uma oscilação pequena
+        const sag = P.curve * len * (0.8 + 0.2 * wave);
+        return [mx + nx * P.curve * len * 0.15 * wave, my + sag];
+      }
+      const off = P.curve * len * wave;
+      return [mx + nx * off, my + ny * off];
+    }
+
     function drawEdges(es) {
       const ctx = p.drawingContext;
       const diag = Math.hypot(p.width, p.height);
       ctx.lineWidth = 0.3;
       ctx.setLineDash([]);
       const seg = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+
       for (const [a, b, same] of es) {
         const dx = b.x - a.x, dy = b.y - a.y;
         const len = Math.hypot(dx, dy);
         if (!len) continue;
         const alpha = P.fade ? Math.max(0.08, Math.min(1, 1 - len / (diag * 0.5))) : 1;
         ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-        if (same) { seg(a.x, a.y, b.x, b.y); continue; }
-        const ux = dx / len, uy = dy / len;
-        for (let t = 0; t < len; t += 13) {
-          const s = Math.min(8, len - t);
-          seg(a.x + ux * t, a.y + uy * t, a.x + ux * (t + s), a.y + uy * (t + s));
+        const c = controlPoint(a, b, same, len);
+
+        if (!c) {
+          if (same) { seg(a.x, a.y, b.x, b.y); continue; }
+          const ux = dx / len, uy = dy / len;
+          for (let t = 0; t < len; t += 13) {
+            const s = Math.min(8, len - t);
+            seg(a.x + ux * t, a.y + uy * t, a.x + ux * (t + s), a.y + uy * (t + s));
+          }
+          continue;
+        }
+
+        if (same) {
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.quadraticCurveTo(c[0], c[1], b.x, b.y);
+          ctx.stroke();
+          continue;
+        }
+
+        // Curva tracejada: amostra a curva em pontos e percorre-a com o padrão
+        // 8 traço / 5 intervalo, sempre com segmentos curtos independentes.
+        const n = Math.max(8, Math.ceil(len / 18));
+        let px = a.x, py = a.y, carry = 0, on = true;
+        for (let i = 1; i <= n; i++) {
+          const t = i / n, u = 1 - t;
+          const x = u * u * a.x + 2 * u * t * c[0] + t * t * b.x;
+          const y = u * u * a.y + 2 * u * t * c[1] + t * t * b.y;
+          let sx = px, sy = py;
+          let rem = Math.hypot(x - px, y - py);
+          const ux = rem ? (x - px) / rem : 0, uy = rem ? (y - py) / rem : 0;
+          while (rem > 0) {
+            const need = (on ? 8 : 5) - carry;
+            const step = Math.min(need, rem);
+            const ex = sx + ux * step, ey = sy + uy * step;
+            if (on) seg(sx, sy, ex, ey);
+            sx = ex; sy = ey; rem -= step; carry += step;
+            if (carry >= (on ? 8 : 5) - 1e-6) { carry = 0; on = !on; }
+          }
+          px = x; py = y;
         }
       }
     }
