@@ -46,6 +46,10 @@ Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/insta
 - Text panels are HTML and act as exclusion zones: nodes and labels stay out of them, edges pass underneath.
 - The form sends all six fields and only thanks the participant once the response is found in the data (legacy mode) or confirmed by the script (post mode).
 
+## Updating
+
+GitHub Pages publishes about a minute after each push. Browsers keep CSS and JS for up to ten minutes, so when changing files in `css/` or `js/`, raise the `?v=` number on their tags in `index.html` and `contribute.html`.
+
 ## Apps Script upgrade
 
 `apps-script/Code.gs` replaces the current read and write deployments with one endpoint. Its GET returns only timestamp, country and word, so the long answers are no longer published. Deployment steps are at the top of the file; afterwards set `READ_URL` and `WRITE_URL` to the new `/exec` address and `WRITE_MODE` to `"post"` in `js/config.js`.
