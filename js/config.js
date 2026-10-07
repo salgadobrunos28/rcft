@@ -20,7 +20,7 @@ window.RCFT_CONFIG = {
   // Desenho das ligações:
   //   "path"     uma só linha curva que atravessa as palavras por ordem de chegada
   //   "network"  todas as palavras ligadas a todas por linhas retas (versão anterior)
-  EDGES: "path",
+  EDGES: "network",
 
   // Tensão da linha curva: 1 suave; valores maiores soltam a curva (laçadas).
   PATH_TENSION: 1,
