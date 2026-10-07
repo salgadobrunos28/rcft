@@ -390,21 +390,32 @@
       el.qr.hidden = false;
     }
 
-    // O QR tem o tamanho de uma célula da grelha (80 px, multiplicado por ?scale)
-    // e fica alinhado à esquerda com o texto, por cima do título (instalação) ou
-    // da legenda (site, se ativado).
+    // O QR tem o tamanho de uma célula da grelha (80 px, multiplicado por ?scale).
+    // Na instalação fica no canto inferior direito, nas margens do texto; no site
+    // (se ativado com ?qr=1) fica por cima da legenda, à esquerda.
     function layoutQR() {
       if (el.qr.hidden) return;
       const size = GRID_SPACING * SCALE;
       const frame = 6 * SCALE;
-      const anchorId = MODE === "install" ? "title" : "legend";
-      const anchor = document.getElementById(anchorId).getBoundingClientRect();
-      const x = 40 * SCALE;
-      const y = Math.max(40 * SCALE, anchor.top - 24 * SCALE - size);
+      const m = 40 * SCALE;
+      let x, y;
       el.qr.style.setProperty("--qr-size", size + "px");
-      el.qr.style.left = (x - frame) + "px";
-      el.qr.style.top = (y - frame) + "px";
-      el.qr.style.bottom = "auto";
+      if (MODE === "install") {
+        x = p.width - m - size;
+        y = p.height - m - size;
+        el.qr.style.left = "auto";
+        el.qr.style.top = "auto";
+        el.qr.style.right = (m - frame) + "px";
+        el.qr.style.bottom = (m - frame) + "px";
+      } else {
+        const anchor = document.getElementById("legend").getBoundingClientRect();
+        x = m;
+        y = Math.max(m, anchor.top - 24 * SCALE - size);
+        el.qr.style.left = (x - frame) + "px";
+        el.qr.style.top = (y - frame) + "px";
+        el.qr.style.right = "auto";
+        el.qr.style.bottom = "auto";
+      }
       const coords = document.getElementById("qr-coords");
       if (coords) coords.textContent = `input -> ${x.toFixed(1)} , ${y.toFixed(1)}`;
     }

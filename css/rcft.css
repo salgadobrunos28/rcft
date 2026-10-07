@@ -232,7 +232,11 @@ html[data-mode="install"] #contribute { display: none; }
 /* Na instalação o texto descritivo está na folha de sala; fica só o título. */
 html[data-mode="install"] #about { display: none; }
 
-/* Instalação: título em baixo à esquerda (com o QR por cima), legenda em cima à direita. */
+/*
+  Instalação:
+    em cima à esquerda: coordenadas     em cima à direita: legenda
+    em baixo à esquerda: título         em baixo à direita: QR, com a etiqueta à esquerda
+*/
 html[data-mode="install"] #title {
   top: auto;
   bottom: calc(40px * var(--s) - var(--pad));
@@ -245,7 +249,21 @@ html[data-mode="install"] #legend {
   top: calc(34px * var(--s) - var(--pad));
 }
 
-html[data-mode="install"] #qr { --qr-corner: calc(10px * var(--s)); --qr-frame: calc(6px * var(--s)); }
+html[data-mode="install"] #coords {
+  right: auto;
+  left: calc(40px * var(--s) - var(--pad));
+  bottom: auto;
+  top: calc(36px * var(--s) - var(--pad));
+  text-align: left;
+}
+
+html[data-mode="install"] #qr {
+  --qr-corner: calc(10px * var(--s));
+  --qr-frame: calc(6px * var(--s));
+  flex-direction: row-reverse;
+}
+
+html[data-mode="install"] #qr-label { text-align: right; }
 
 /* Ecrãs estreitos (telemóvel) */
 @media (max-width: 767px) {
