@@ -390,18 +390,17 @@
       el.qr.hidden = false;
     }
 
-    // Encaixa o QR na grelha: ocupa 2x2 células (mais com ?scale), com o canto
-    // superior esquerdo num cruzamento de linhas, por cima da legenda.
+    // O QR tem o tamanho de uma célula da grelha (80 px, multiplicado por ?scale)
+    // e fica alinhado à esquerda com o texto, por cima do título (instalação) ou
+    // da legenda (site, se ativado).
     function layoutQR() {
       if (el.qr.hidden) return;
-      const cells = Math.max(2, Math.round(2 * SCALE));
-      const size = cells * GRID_SPACING;
-      const frame = 8 * SCALE;
-      const legendTop = document.getElementById("legend").getBoundingClientRect().top;
-      const x = GRID_SPACING;
-      let bottomLine = Math.floor((legendTop - 20 * SCALE) / GRID_SPACING) * GRID_SPACING;
-      let y = bottomLine - size;
-      if (y < 2 * GRID_SPACING) y = 2 * GRID_SPACING;
+      const size = GRID_SPACING * SCALE;
+      const frame = 6 * SCALE;
+      const anchorId = MODE === "install" ? "title" : "legend";
+      const anchor = document.getElementById(anchorId).getBoundingClientRect();
+      const x = 40 * SCALE;
+      const y = Math.max(40 * SCALE, anchor.top - 24 * SCALE - size);
       el.qr.style.setProperty("--qr-size", size + "px");
       el.qr.style.left = (x - frame) + "px";
       el.qr.style.top = (y - frame) + "px";
