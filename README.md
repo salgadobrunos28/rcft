@@ -30,7 +30,7 @@ vendor/             p5.js 1.9.0 (LGPL-2.1) and qrcode-generator 1.4.4 (MIT)
 | `?mode=install` | same as opening `installation.html` |
 | `?flash=0` / `?flash=1` | turn the new-word flash off or on (on by default only in the installation) |
 
-Installation mode hides the cursor and the contribute button and shows a QR code (bottom left, above the legend) pointing to `QR_URL` in `js/config.js`.
+Installation mode hides the cursor and the contribute button and shows a QR code pointing to `QR_URL` in `js/config.js` (the questions page on rcft.cargo.site). When the form runs inside the Cargo page, it returns to `SITE_URL` after submitting.
 
 Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/installation.html?scale=1.5`
 

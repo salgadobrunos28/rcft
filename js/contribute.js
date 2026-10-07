@@ -22,6 +22,34 @@
 
   const wait = ms => new Promise(r => setTimeout(r, ms));
 
+  // Dentro do Cargo (iframe), o fecho e o regresso depois do envio abrem a
+  // página principal do rcft.cargo.site na janela inteira, e não dentro do iframe.
+  const EMBEDDED = window.top !== window.self;
+  const HOME = EMBEDDED && C.SITE_URL ? C.SITE_URL : "./";
+
+  function goHome() {
+    if (EMBEDDED && C.SITE_URL) {
+      try { window.top.location.href = C.SITE_URL; } catch (_) { /* bloqueado */ }
+      // Se o browser bloquear a navegação da janela a partir do iframe, a página
+      // continua aqui: mostra uma ligação para a pessoa voltar ao mapa.
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = C.SITE_URL;
+        a.target = "_top";
+        a.textContent = "See the cartography.";
+        status.append(" ", a);
+      }, 1500);
+      return;
+    }
+    location.href = "./";
+  }
+
+  const close = document.querySelector(".close");
+  if (close) {
+    close.href = HOME;
+    if (EMBEDDED) close.target = "_top";
+  }
+
   function say(text) {
     status.textContent = text;
   }
@@ -78,6 +106,6 @@
     D.addPending(params.get("oneword"), params.get("country"));
     form.reset();
     say("Thank you. Your response has been added to the cartography.");
-    setTimeout(() => { location.href = "./"; }, BACK_TO_MAP_MS);
+    setTimeout(goHome, BACK_TO_MAP_MS);
   });
 })();
