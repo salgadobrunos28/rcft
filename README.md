@@ -52,6 +52,6 @@ Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/insta
 
 GitHub Pages publishes about a minute after each push. Browsers keep CSS and JS for up to ten minutes, so when changing files in `css/` or `js/`, raise the `?v=` number on their tags in `index.html` and `contribute.html`.
 
-## Apps Script upgrade
+## Apps Script
 
-`apps-script/Code.gs` replaces the current read and write deployments with one endpoint. Its GET returns only timestamp, country and word, so the long answers are no longer published. Deployment steps are at the top of the file; afterwards set `READ_URL` and `WRITE_URL` to the new `/exec` address and `WRITE_MODE` to `"post"` in `js/config.js`.
+Reading and writing go through one endpoint, `apps-script/Code.gs`, deployed as the standalone project "rcft endpoint" (7 October 2026). GET returns only timestamp, country and word, cached for 20 seconds, so the long answers are not published; POST appends a row to the responses sheet. To change the script, edit it in the Apps Script editor and use Deploy, Manage deployments, Edit, New version, which keeps the `/exec` address. The earlier endpoints are still active and listed in `js/config.js`.
