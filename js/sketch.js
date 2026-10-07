@@ -206,12 +206,21 @@
       const existing = new Map(nodes.map(n => [n.key, n]));
       const next = [];
       let added = 0;
+      let usedNext = false;
       for (const a of agg.values()) {
         let n = existing.get(a.key);
         if (!n) {
           n = new Node(a.key);
           n.measure();
-          placeRandom(n);
+          if (firstLoadDone && nextPos && !usedNext && canvasReady()) {
+            // A primeira palavra nova nasce no ponto anunciado pelo QR.
+            n.x = nextPos.x;
+            n.y = nextPos.y;
+            n.unplaced = false;
+            usedNext = true;
+          } else {
+            placeRandom(n);
+          }
           if (firstLoadDone) { n.bornAt = p.millis(); added++; }
         }
         n.f = a.f;
@@ -220,6 +229,7 @@
       }
 
       nodes = next;
+      if (usedNext) rollNextPos();
       if (added > 0 && FLASH) triggerFlash();
       buildEdges();
       rowsCount = rows.length;
@@ -261,6 +271,38 @@
         updateCoords(true);
         updateDebug();
       }
+    }
+
+    // ---------- Próximo ponto ----------
+
+    /*
+      Com o QR visível (instalação), o sistema sorteia antecipadamente o ponto
+      onde a próxima palavra vai nascer e mostra-o na etiqueta do QR
+      ("input -> x , y"). Quando chega uma palavra nova, a primeira nasce aí e é
+      sorteado o ponto seguinte; se chegarem várias de uma vez, as outras ficam
+      em pontos aleatórios. O ponto evita as bordas o suficiente para a
+      etiqueta de qualquer palavra caber, para nascer exatamente onde foi anunciado.
+    */
+    let nextPos = null;
+
+    function rollNextPos() {
+      if (!SHOW_QR) return;
+      if (!canvasReady()) { nextPos = null; updateQRLabel(); return; }
+      const half = 80 * SCALE;
+      const minX = Math.max(margin, half);
+      const maxX = Math.min(p.width - margin, p.width - half);
+      const minY = Math.max(margin, LABEL_OFFSET + labelSize);
+      const maxY = p.height - margin;
+      nextPos = { x: p.random(minX, maxX), y: p.random(minY, maxY) };
+      updateQRLabel();
+    }
+
+    function updateQRLabel() {
+      const c = document.getElementById("qr-coords");
+      if (!c) return;
+      c.textContent = nextPos
+        ? `input -> ${nextPos.x.toFixed(1)} , ${nextPos.y.toFixed(1)}`
+        : "input -> ...";
     }
 
     // ---------- Flash ----------
@@ -417,8 +459,6 @@
         el.qr.style.right = "auto";
         el.qr.style.bottom = "auto";
       }
-      const coords = document.getElementById("qr-coords");
-      if (coords) coords.textContent = `input -> ${x.toFixed(1)} , ${y.toFixed(1)}`;
     }
 
     // ---------- Atualização automática ----------
@@ -463,6 +503,7 @@
       layoutQR();
       if (params.get("debug") === "1") el.debug.hidden = false;
       applyResponsive();
+      rollNextPos();
 
       // Mostra logo a última versão guardada (e as respostas acabadas de enviar
       // a partir deste browser); a rede atualiza a seguir.
@@ -493,6 +534,7 @@
       p.resizeCanvas(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
       applyResponsive();
       layoutQR();
+      rollNextPos();
       for (const n of nodes) {
         if (!wasReady || n.unplaced) {
           // O canvas acabou de ganhar tamanho: os nós aparecem já distribuídos.
