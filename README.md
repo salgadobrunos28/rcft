@@ -43,7 +43,8 @@ Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/insta
 - New responses are merged into the existing field every 30 seconds. Existing nodes keep their position; new words appear with a short ring. In the installation, a new word also triggers a white full-screen flash fading out in under a second (at most one flash every 3 seconds).
 - The last valid dataset is cached in the browser. If the network or the Apps Script fails, the field keeps showing the cached corpus. It never falls back to invented data.
 - Text is transparent HTML over the canvas: nodes and edges stay visible underneath it, as in the original sketch.
-- Edges are drawn as independent short segments, as in the original sketch. A single long dashed path (`setLineDash`) proved several times slower in Chrome.
+- One continuous curved line runs through the words in order of arrival (Catmull-Rom converted to cubic Bezier, `PATH_TENSION` in `js/config.js`). Each stretch is solid when both answers come from the same country and dashed when not; each new word extends the line from its end. `EDGES: "network"` restores the previous straight network (every word linked to every other).
+- Lines are drawn as independent short segments, as in the original sketch. A single long dashed path (`setLineDash`) proved several times slower in Chrome.
 - The form sends all six fields and thanks the participant once Google has processed the submission; on a network error the fields stay filled so they can try again.
 
 ## Updating

@@ -197,6 +197,15 @@
     // Junta as respostas por palavra. Mantém os nós que já existem (e a sua
     // posição); só as palavras novas entram no mapa.
     function applyRows(rows, source) {
+      // Ordem de chegada: a linha contínua atravessa as palavras por esta ordem.
+      rows = rows
+        .map((r, i) => [r, i])
+        .sort((u, v) => {
+          const a = u[0].ts, b = v[0].ts;
+          if (a == null || b == null || a === b) return u[1] - v[1];
+          return a - b;
+        })
+        .map(x => x[0]);
       const agg = new Map();
       for (const r of rows) {
         const key = r.word.toLowerCase();
@@ -379,6 +388,73 @@
       }
     }
 
+    /*
+      Linha contínua (config EDGES: "path"): uma só curva que atravessa as
+      palavras por ordem de chegada. Cada troço é uma curva de Catmull-Rom
+      convertida em Bézier cúbica; é contínuo se as duas palavras vêm do mesmo
+      país e tracejado se não, como na legenda. Cada palavra nova prolonga a
+      linha a partir do fim.
+    */
+    const PATH_TENSION = Number.isFinite(C.PATH_TENSION) ? C.PATH_TENSION : 1;
+
+    function cubicPoints(a, c1, c2, b, n) {
+      const out = [];
+      for (let i = 0; i <= n; i++) {
+        const t = i / n, u = 1 - t;
+        out.push([
+          u * u * u * a.x + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * b.x,
+          u * u * u * a.y + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * b.y
+        ]);
+      }
+      return out;
+    }
+
+    // Traça uma curva amostrada; tracejada com o padrão 8 / 5 do original,
+    // em segmentos curtos independentes.
+    function strokeSampled(ctx, pts, dashed) {
+      if (!dashed) {
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.stroke();
+        return;
+      }
+      const DASH = 8 * SCALE, GAP = 5 * SCALE;
+      let carry = 0, on = true;
+      for (let i = 1; i < pts.length; i++) {
+        let [sx, sy] = pts[i - 1];
+        const [x, y] = pts[i];
+        let rem = Math.hypot(x - sx, y - sy);
+        const ux = rem ? (x - sx) / rem : 0, uy = rem ? (y - sy) / rem : 0;
+        while (rem > 0) {
+          const need = (on ? DASH : GAP) - carry;
+          const step = Math.min(need, rem);
+          const ex = sx + ux * step, ey = sy + uy * step;
+          if (on) { ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke(); }
+          sx = ex; sy = ey; rem -= step; carry += step;
+          if (carry >= (on ? DASH : GAP) - 1e-6) { carry = 0; on = !on; }
+        }
+      }
+    }
+
+    function drawPath() {
+      const ns = nodes;
+      if (ns.length < 2) return;
+      const ctx = p.drawingContext;
+      const k = PATH_TENSION / 6;
+      ctx.strokeStyle = "rgba(255,255,255,0.95)";
+      ctx.lineWidth = (isMobile ? 0.7 : 0.9) * SCALE;
+      ctx.setLineDash([]);
+      for (let i = 0; i + 1 < ns.length; i++) {
+        const p0 = ns[Math.max(0, i - 1)], p1 = ns[i], p2 = ns[i + 1], p3 = ns[Math.min(ns.length - 1, i + 2)];
+        const c1 = [p1.x + (p2.x - p0.x) * k, p1.y + (p2.y - p0.y) * k];
+        const c2 = [p2.x - (p3.x - p1.x) * k, p2.y - (p3.y - p1.y) * k];
+        const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        const pts = cubicPoints(p1, c1, c2, p2, Math.max(12, Math.ceil(len / (10 * SCALE))));
+        strokeSampled(ctx, pts, p1.country !== p2.country);
+      }
+    }
+
     let lastCoordsAt = 0;
     function updateCoords(force) {
       const now = performance.now();
@@ -406,7 +482,9 @@
         `source     ${lastSource}${loading ? " (updating)" : ""}`,
         `responses  ${rowsCount}`,
         `words      ${nodes.length}`,
-        `edges      ${sameEdges.length + diffEdges.length} (same ${sameEdges.length} / different ${diffEdges.length})`,
+        C.EDGES === "network"
+          ? `edges      ${sameEdges.length + diffEdges.length} (same ${sameEdges.length} / different ${diffEdges.length})`
+          : `path       ${Math.max(0, nodes.length - 1)} segments`,
         `last sync  ${t}`,
         `error      ${lastError || "-"}`,
         `fps        ${Math.round(p.frameRate())}`,
@@ -547,7 +625,8 @@
       if (!canvasReady()) return;
 
       cartesianGrid();
-      drawEdges();
+      if (C.EDGES === "network") drawEdges();
+      else drawPath();
       for (const n of nodes) {
         if (!paused) n.update();
         n.display(now);
