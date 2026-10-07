@@ -61,15 +61,17 @@ body.map {
   letter-spacing: 0;
 }
 
+/* Texto por baixo do título, alinhado à esquerda com ele */
 #about {
-  right: calc(40px * var(--s) - var(--pad));
-  top: calc(40px * var(--s) - var(--pad));
+  left: calc(40px * var(--s) - var(--pad));
+  top: calc(64px * var(--s) - var(--pad));
   width: calc(min(42vw, 520px * var(--s)) + 2 * var(--pad));
   font-size: calc(11px * var(--s));
   line-height: calc(16px * var(--s));
 }
 
 #about p { margin: 0; }
+#about p + p { margin-top: calc(16px * var(--s)); }
 
 #legend {
   left: calc(44px * var(--s) - var(--pad));
@@ -181,8 +183,8 @@ body.map {
 #debug {
   position: fixed;
   z-index: 3;
-  left: calc(40px * var(--s) - var(--pad));
-  top: calc(70px * var(--s));
+  right: calc(40px * var(--s) - var(--pad));
+  top: calc(40px * var(--s) - var(--pad));
   margin: 0;
   padding: var(--pad);
   background: var(--blue);
@@ -211,7 +213,7 @@ html[data-mode="install"] #contribute { display: none; }
     line-height: 14px;
   }
 
-  #about p + p { margin-top: 0; }
+  #about p + p { margin-top: 14px; }
 
   #legend,
   #coords {

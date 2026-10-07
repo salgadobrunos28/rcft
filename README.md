@@ -1,6 +1,6 @@
 # Relational Cartography (rcft)
 
-Participatory generative cartography. Each visitor is asked to define in a single word what a border is; every answer becomes a node in a drifting field. The work adopts the visual grammar of data and surveillance systems while refusing their function.
+Relational Cartography is a generative system that traces the shifting relations between words, people and territories. The work invites each visitor to define in a single word what a border is. Every answer becomes a node in a drifting field, where meanings move closer and apart without settling into a definition.
 
 Bruno Mesquita, 2026. p5.js, screen, steel.
 
