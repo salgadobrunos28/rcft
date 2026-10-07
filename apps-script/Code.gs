@@ -72,10 +72,10 @@ function doPost(e) {
   const row = [
     new Date(),
     safe_(p.country, 120),
-    safe_(p.meaning, 2000),
-    safe_(p.forms, 2000),
-    safe_(p.movement, 2000),
-    safe_(p.space, 2000),
+    safe_(p.meaning, 1000),
+    safe_(p.forms, 1000),
+    safe_(p.movement, 1000),
+    safe_(p.space, 1000),
     safe_(p.oneword, 60)
   ];
 

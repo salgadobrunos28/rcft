@@ -335,7 +335,6 @@ body.form {
 
 #rcft-form-status a { color: var(--fg); }
 
-.sink { position: absolute; width: 0; height: 0; border: 0; visibility: hidden; }
 
 @media (min-width: 768px) {
   .field input,

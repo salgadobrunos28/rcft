@@ -43,8 +43,9 @@ Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/insta
 
 - New responses are merged into the existing field every 30 seconds. Existing nodes keep their position; new words appear with a short ring.
 - The last valid dataset is cached in the browser. If the network or the Apps Script fails, the field keeps showing the cached corpus. It never falls back to invented data.
-- Text panels are HTML and act as exclusion zones: nodes and labels stay out of them, edges pass underneath.
-- The form sends all six fields and only thanks the participant once the response is found in the data (legacy mode) or confirmed by the script (post mode).
+- Text is transparent HTML over the canvas: nodes and edges stay visible underneath it, as in the original sketch.
+- Edges are drawn as independent short segments, as in the original sketch. A single long dashed path (`setLineDash`) proved several times slower in Chrome.
+- The form sends all six fields and thanks the participant once Google has processed the submission; on a network error the fields stay filled so they can try again.
 
 ## Updating
 

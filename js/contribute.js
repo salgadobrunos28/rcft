@@ -1,20 +1,17 @@
 /*
   Relational Cartography (rcft): formulário
-  Envia os seis campos e só agradece quando a resposta está confirmada.
+  Envia os seis campos e agradece quando o servidor do Google responde ao envio.
 */
 (function () {
   const C = window.RCFT_CONFIG;
-  const D = window.RCFT_DATA;
 
   const FIELDS = ["country", "meaning", "forms", "movement", "space", "oneword"];
   const REQUIRED = ["country", "meaning", "oneword"];
+  const SEND_TIMEOUT_MS = 45000;
 
   const form = document.getElementById("rcft-form");
   const status = document.getElementById("rcft-form-status");
   const button = form.querySelector("button[type=submit]");
-  const sink = document.getElementById("rcft-sink");
-
-  const wait = ms => new Promise(r => setTimeout(r, ms));
 
   function say(text, withLink) {
     status.textContent = text;
@@ -34,45 +31,33 @@
     return out;
   }
 
-  // Apps Script atual: pedido GET num iframe escondido (o mesmo mecanismo que
-  // já funcionava quando se chegava ao formulário pelo botão do mapa).
+  async function withTimeout(run) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), SEND_TIMEOUT_MS);
+    try {
+      return await run(ctrl.signal);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /*
+    Apps Script atual: pedido GET com os seis campos, o mesmo que o formulário
+    original fazia. O modo "no-cors" não deixa ler a resposta, mas a promessa só
+    se resolve depois de o Google ter executado o script e respondido; uma falha
+    de rede rejeita-a. A releitura dos dados para confirmar foi retirada porque o
+    Apps Script de leitura demora 20 a 40 segundos por pedido.
+  */
   function sendLegacy(params) {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        sink.onload = null;
-        reject(new Error("timeout"));
-      }, C.FETCH_TIMEOUT_MS + 5000);
-      sink.onload = () => {
-        clearTimeout(timer);
-        sink.onload = null;
-        resolve();
-      };
-      sink.src = C.WRITE_URL + (C.WRITE_URL.includes("?") ? "&" : "?") + params.toString();
-    });
+    const url = C.WRITE_URL + (C.WRITE_URL.includes("?") ? "&" : "?") + params.toString();
+    return withTimeout(signal => fetch(url, { mode: "no-cors", cache: "no-store", signal }));
   }
 
   // Apps Script deste repositório (apps-script/Code.gs): POST com resposta JSON.
   async function sendPost(params) {
-    const res = await fetch(C.WRITE_URL, { method: "POST", body: params });
+    const res = await withTimeout(signal => fetch(C.WRITE_URL, { method: "POST", body: params, signal }));
     const json = await res.json();
     if (!json || json.ok !== true) throw new Error((json && json.error) || "rejected");
-  }
-
-  // Relê os dados até a palavra enviada aparecer.
-  async function confirmInData(word, sentAt) {
-    const w = word.toLowerCase();
-    for (let i = 0; i < 4; i++) {
-      await wait(i === 0 ? 1500 : 5000);
-      try {
-        const rows = await D.fetchRows();
-        const found = rows.some(r =>
-          r.word.toLowerCase() === w &&
-          (r.ts === null || r.ts >= sentAt - 10 * 60 * 1000)
-        );
-        if (found) return true;
-      } catch (_) { /* tenta outra vez */ }
-    }
-    return false;
   }
 
   form.addEventListener("submit", async e => {
@@ -90,22 +75,14 @@
 
     button.disabled = true;
     say("Sending...");
-    const sentAt = Date.now();
 
     try {
-      if (C.WRITE_MODE === "post") {
-        await sendPost(params);
-        form.reset();
-        say("Thank you. Your response has been added to the cartography.", true);
-      } else {
-        await sendLegacy(params);
-        say("Sent. Confirming...");
-        const ok = await confirmInData(params.get("oneword"), sentAt);
-        form.reset();
-        if (ok) say("Thank you. Your response has been added to the cartography.", true);
-        else say("Your response was sent. It may take a few minutes to appear in the cartography.", true);
-      }
+      if (C.WRITE_MODE === "post") await sendPost(params);
+      else await sendLegacy(params);
+      form.reset();
+      say("Thank you. Your response has been added to the cartography.", true);
     } catch (err) {
+      // Os campos mantêm-se preenchidos para a pessoa poder tentar outra vez.
       console.warn("[rcft] envio falhou:", err);
       say("Your response could not be sent. Please check your connection and try again.");
     } finally {
