@@ -163,21 +163,55 @@ body.map {
   outline: none;
 }
 
-/* QR code da instalação: canto inferior esquerdo, por cima da legenda */
+/*
+  QR code da instalação, tratado como um elemento do sistema: ocupa células da
+  grelha (posição calculada no sketch), tem um enquadramento de cantos como as
+  caixas de deteção da visão máquina, e uma etiqueta na mesma gramática da
+  legenda e das coordenadas. O fundo do QR é opaco para as linhas não passarem
+  por cima (impediriam a leitura).
+*/
 #qr {
-  left: calc(41px * var(--s) - var(--pad));
-  bottom: calc(139px * var(--s) - var(--pad));
+  --qr-size: 160px;
+  --qr-frame: calc(8px * var(--s));
+  --qr-corner: calc(14px * var(--s));
+  padding: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: calc(14px * var(--s));
+}
+
+#qr-frame {
+  padding: var(--qr-frame);
+  background:
+    linear-gradient(var(--fg), var(--fg)) left top / var(--qr-corner) 1px no-repeat,
+    linear-gradient(var(--fg), var(--fg)) left top / 1px var(--qr-corner) no-repeat,
+    linear-gradient(var(--fg), var(--fg)) right top / var(--qr-corner) 1px no-repeat,
+    linear-gradient(var(--fg), var(--fg)) right top / 1px var(--qr-corner) no-repeat,
+    linear-gradient(var(--fg), var(--fg)) left bottom / var(--qr-corner) 1px no-repeat,
+    linear-gradient(var(--fg), var(--fg)) left bottom / 1px var(--qr-corner) no-repeat,
+    linear-gradient(var(--fg), var(--fg)) right bottom / var(--qr-corner) 1px no-repeat,
+    linear-gradient(var(--fg), var(--fg)) right bottom / 1px var(--qr-corner) no-repeat,
+    var(--blue);
 }
 
 #qr-code {
-  width: calc(82px * var(--s));
-  height: calc(82px * var(--s));
-  padding: calc(5px * var(--s));
-  border-radius: calc(8px * var(--s));
-  background: var(--fg);
+  width: var(--qr-size);
+  height: var(--qr-size);
+  background: var(--blue);
 }
 
+#qr[data-style="light"] #qr-code { background: var(--fg); }
+
 #qr-code svg { display: block; width: 100%; height: 100%; }
+
+#qr-label {
+  font-size: calc(10px * var(--s));
+  line-height: calc(18px * var(--s));
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#qr-label span { display: block; }
 
 #debug {
   position: fixed;
@@ -195,6 +229,8 @@ body.map {
 html[data-mode="install"],
 html[data-mode="install"] * { cursor: none !important; }
 html[data-mode="install"] #contribute { display: none; }
+/* Na instalação o texto descritivo está na folha de sala; fica só o título. */
+html[data-mode="install"] #about { display: none; }
 
 /* Ecrãs estreitos (telemóvel) */
 @media (max-width: 767px) {

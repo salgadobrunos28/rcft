@@ -9,7 +9,7 @@
   <meta property="og:description" content="A generative system that traces the shifting relations between words, people and territories.">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#0018ff">
-  <link rel="stylesheet" href="css/rcft.css?v=10">
+  <link rel="stylesheet" href="css/rcft.css?v=11">
 </head>
 <body class="map">
   <div id="stage" aria-hidden="true"></div>
@@ -46,15 +46,16 @@
   <a id="contribute" class="panel button" href="contribute.html">Contribute a response</a>
 
   <div id="qr" class="panel" hidden>
-    <div id="qr-code"></div>
+    <div id="qr-frame"><div id="qr-code"></div></div>
+    <div id="qr-label"><span>scan = add a word</span><span id="qr-coords"></span></div>
   </div>
 
   <pre id="debug" hidden></pre>
 
-  <script src="js/config.js?v=10"></script>
-  <script src="js/data.js?v=10"></script>
+  <script src="js/config.js?v=11"></script>
+  <script src="js/data.js?v=11"></script>
   <script src="vendor/p5-1.9.0.min.js"></script>
   <script src="vendor/qrcode-generator-1.4.4.js"></script>
-  <script src="js/sketch.js?v=10"></script>
+  <script src="js/sketch.js?v=11"></script>
 </body>
 </html>

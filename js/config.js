@@ -25,5 +25,8 @@ window.RCFT_CONFIG = {
 
   // Endereço para onde aponta o QR code da instalação
   // (o mesmo do QR code que estava no rcinstallation.cargo.site).
-  QR_URL: "https://rcft.cargo.site/"
+  QR_URL: "https://rcft.cargo.site/",
+
+  // Aspeto do QR code: "inverted" (branco sobre o azul) ou "light" (preto sobre branco).
+  QR_STYLE: "inverted"
 };

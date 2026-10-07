@@ -365,22 +365,49 @@
       ].join("\n");
     }
 
+    // "inverted": módulos brancos sobre o azul da peça (por omissão).
+    // "light": módulos pretos sobre branco, para telemóveis que não leiam a versão invertida.
+    const QR_STYLE = params.get("qrstyle") || C.QR_STYLE || "inverted";
+
     function buildQR() {
       if (!SHOW_QR || typeof window.qrcode !== "function") return;
       const url = C.QR_URL || new URL("./", location.href).href;
       const qr = window.qrcode(0, "M");
       qr.addData(url);
       qr.make();
-      el.qrCode.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 4, scalable: true });
+      // Margem de 2 módulos dentro do quadrado (zona de silêncio exigida pela leitura).
+      el.qrCode.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 8, scalable: true });
       const svg = el.qrCode.querySelector("svg");
+      const light = QR_STYLE === "light";
       if (svg) {
-        svg.querySelectorAll("rect").forEach(r => r.setAttribute("fill", "#ffffff"));
-        svg.querySelectorAll("path").forEach(path => path.setAttribute("fill", "#000000"));
+        svg.querySelectorAll("rect").forEach(r => r.setAttribute("fill", light ? "#ffffff" : "rgb(0,24,255)"));
+        svg.querySelectorAll("path").forEach(path => path.setAttribute("fill", light ? "#000000" : "#ffffff"));
         svg.setAttribute("shape-rendering", "crispEdges");
         svg.setAttribute("aria-label", "QR code: " + url);
         svg.setAttribute("role", "img");
       }
+      el.qr.dataset.style = light ? "light" : "inverted";
       el.qr.hidden = false;
+    }
+
+    // Encaixa o QR na grelha: ocupa 2x2 células (mais com ?scale), com o canto
+    // superior esquerdo num cruzamento de linhas, por cima da legenda.
+    function layoutQR() {
+      if (el.qr.hidden) return;
+      const cells = Math.max(2, Math.round(2 * SCALE));
+      const size = cells * GRID_SPACING;
+      const frame = 8 * SCALE;
+      const legendTop = document.getElementById("legend").getBoundingClientRect().top;
+      const x = GRID_SPACING;
+      let bottomLine = Math.floor((legendTop - 20 * SCALE) / GRID_SPACING) * GRID_SPACING;
+      let y = bottomLine - size;
+      if (y < 2 * GRID_SPACING) y = 2 * GRID_SPACING;
+      el.qr.style.setProperty("--qr-size", size + "px");
+      el.qr.style.left = (x - frame) + "px";
+      el.qr.style.top = (y - frame) + "px";
+      el.qr.style.bottom = "auto";
+      const coords = document.getElementById("qr-coords");
+      if (coords) coords.textContent = `input -> ${x.toFixed(1)} , ${y.toFixed(1)}`;
     }
 
     // ---------- Ciclo p5 ----------
@@ -393,6 +420,7 @@
       p.textAlign(p.CENTER, p.CENTER);
 
       buildQR();
+      layoutQR();
       if (params.get("debug") === "1") el.debug.hidden = false;
       applyResponsive();
 
@@ -422,6 +450,7 @@
       const wasReady = canvasReady();
       p.resizeCanvas(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
       applyResponsive();
+      layoutQR();
       for (const n of nodes) {
         if (!wasReady || n.unplaced) {
           // O canvas acabou de ganhar tamanho: os nós aparecem já distribuídos.
