@@ -171,13 +171,14 @@ html[data-ui="sheet"] #coords {
 .r-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .r-row span:nth-child(2), .r-row span:nth-child(3) { text-align: right; }
 
+/* Cabeçalho da tabela no registo do botão "Contribute a response": branco, maiúsculas espaçadas. */
 .r-head {
   border-bottom: 1px solid var(--line);
   margin-bottom: 4px;
-  font-size: var(--t-xs);
+  font-size: var(--t-s);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--dim);
+  color: #fff;
 }
 
 /* ---------- ecrãs estreitos ---------- */
@@ -206,7 +207,7 @@ html[data-ui="sheet"] #coords {
 
   .r-row { grid-template-columns: 1fr 34px 34px; }
   .r-head span:first-child { font-size: 0; }
-  .r-head span:first-child::before { content: "Latest"; font-size: var(--t-xs); }
+  .r-head span:first-child::before { content: "Latest"; font-size: var(--t-s); }
 }
 
 /* ---------- formulário (folha) ---------- */
