@@ -108,6 +108,9 @@
         this.phase = p.random(p.TWO_PI);
         this.bornAt = null;
         this.lw = 0;
+        // Sentido da deriva em cada eixo: inverte quando a palavra toca a moldura.
+        this.sx = 1;
+        this.sy = 1;
       }
 
       measure() {
@@ -120,13 +123,15 @@
         return baseRadius * pulse * p.map(this.f, 1, 5, 1, 1.8);
       }
 
-      update() {
-        this.x += p.map(p.noise(this.xoff), 0, 1, -MOVE_AMT, MOVE_AMT);
-        this.y += p.map(p.noise(this.yoff), 0, 1, -MOVE_AMT, MOVE_AMT);
-        keepInside(this);
-        this.xoff += NOISE_STEP;
-        this.yoff += NOISE_STEP;
-        if (this.f > 1) this.phase += 0.03 * this.f;
+      // dt: fotogramas de 60 Hz decorridos. A deriva tem a mesma velocidade num
+      // computador a 60 fps e num aparelho mais lento (Raspberry Pi).
+      update(dt) {
+        this.x += this.sx * p.map(p.noise(this.xoff), 0, 1, -MOVE_AMT, MOVE_AMT) * dt;
+        this.y += this.sy * p.map(p.noise(this.yoff), 0, 1, -MOVE_AMT, MOVE_AMT) * dt;
+        keepInside(this, true);
+        this.xoff += NOISE_STEP * dt;
+        this.yoff += NOISE_STEP * dt;
+        if (this.f > 1) this.phase += 0.03 * this.f * dt;
       }
 
       display(now) {
@@ -156,22 +161,37 @@
 
     // ---------- Espaço disponível ----------
 
-    // Limites do centro do nó: a margem, mas nunca deixando a etiqueta sair do ecrã.
+    /*
+      Limites do centro do nó. Com a folha de mapa, o limite é a própria moldura
+      (js/ui.js): a palavra pode chegar até ela, com a etiqueta e o círculo
+      sempre do lado de dentro.
+    */
     function bounds(n) {
-      const halfW = n ? Math.max(n.radius() / 2, n.lw / 2) + 4 * SCALE : 0;
-      return {
-        minX: Math.max(margin, halfW),
-        maxX: Math.min(p.width - margin, p.width - halfW),
-        minY: Math.max(margin, LABEL_OFFSET + labelSize),
-        maxY: p.height - margin
+      const pad = 3 * SCALE;
+      const halfW = (n ? Math.max(n.radius() / 2, n.lw / 2) : 0) + pad;
+      const b = {
+        minX: margin + halfW,
+        maxX: p.width - margin - halfW,
+        minY: margin + LABEL_OFFSET + labelSize * 0.6 + pad,
+        maxY: p.height - margin - (n ? n.radius() / 2 : 0) - pad
       };
+      if (b.maxX < b.minX) b.minX = b.maxX = p.width / 2;
+      if (b.maxY < b.minY) b.minY = b.maxY = p.height / 2;
+      return b;
     }
 
-    // Os nós atravessam livremente as zonas de texto, como na versão original.
-    function keepInside(n) {
+    /*
+      Os nós atravessam livremente as zonas de texto, como na versão original.
+      Ao tocar na moldura, a deriva inverte nesse eixo e a palavra volta para
+      dentro; antes ficava presa à borda enquanto o ruído a empurrasse para fora
+      e as palavras acumulavam-se nos cantos.
+    */
+    function keepInside(n, bounce) {
       const b = bounds(n);
-      n.x = p.constrain(n.x, b.minX, b.maxX);
-      n.y = p.constrain(n.y, b.minY, b.maxY);
+      if (n.x < b.minX) { n.x = b.minX; if (bounce) n.sx = -n.sx; }
+      else if (n.x > b.maxX) { n.x = b.maxX; if (bounce) n.sx = -n.sx; }
+      if (n.y < b.minY) { n.y = b.minY; if (bounce) n.sy = -n.sy; }
+      else if (n.y > b.maxY) { n.y = b.maxY; if (bounce) n.sy = -n.sy; }
     }
 
     // Dentro do Cargo o iframe pode começar com tamanho zero. Enquanto o canvas
@@ -189,11 +209,19 @@
       n.unplaced = false;
     }
 
+    // Distância da moldura às bordas, igual à de js/ui.js (na instalação, à escala).
+    function frameInset() {
+      const root = document.documentElement;
+      if (root.dataset.ui !== "sheet") return null;
+      const m = parseFloat(getComputedStyle(root).getPropertyValue("--m")) || 0;
+      return Math.round(m * (MODE === "install" ? SCALE : 1));
+    }
+
     function applyResponsive() {
       isMobile = window.innerWidth < 768;
-      // Com a interface de folha de mapa, as palavras ficam dentro da moldura.
-      const sheet = document.documentElement.dataset.ui === "sheet";
-      margin = (isMobile ? (sheet ? 30 : 6) : 80) * SCALE;
+      // Com a interface de folha de mapa, as palavras vão até à moldura.
+      const inset = frameInset();
+      margin = inset !== null ? inset + 1 : (isMobile ? 6 : 80) * SCALE;
       baseRadius = (isMobile ? 7 : 8) * SCALE;
       labelSize = (isMobile ? 9 : 10) * SCALE;
       coordLines = isMobile ? 8 : 10;
@@ -321,11 +349,11 @@
     function rollNextPos() {
       if (!SHOW_QR) return;
       if (!canvasReady()) { nextPos = null; updateQRLabel(); return; }
-      const half = 80 * SCALE;
-      const minX = Math.max(margin, half);
-      const maxX = Math.min(p.width - margin, p.width - half);
-      const minY = Math.max(margin, LABEL_OFFSET + labelSize);
-      const maxY = p.height - margin;
+      // Dentro dos mesmos limites das palavras, com folga para uma etiqueta longa.
+      const half = 60 * SCALE;
+      const b = bounds(null);
+      const minX = margin + half, maxX = Math.max(minX, p.width - margin - half);
+      const minY = b.minY, maxY = Math.max(minY, b.maxY - baseRadius);
       nextPos = { x: p.random(minX, maxX), y: p.random(minY, maxY) };
       updateQRLabel();
     }
@@ -364,35 +392,47 @@
 
     // ---------- Desenho ----------
 
+    // Grelha de 80 px a partir do centro: os eixos centrais são linhas da grelha,
+    // e a graduação da moldura (js/ui.js) marca exatamente estas linhas.
     function cartesianGrid() {
+      const cx = Math.round(p.width / 2), cy = Math.round(p.height / 2);
       p.push();
       p.stroke(255, 18);
       p.strokeWeight(0.5);
-      for (let x = 0; x <= p.width; x += GRID_SPACING) p.line(x, 0, x, p.height);
-      for (let y = 0; y <= p.height; y += GRID_SPACING) p.line(0, y, p.width, y);
+      for (let x = cx % GRID_SPACING; x <= p.width; x += GRID_SPACING) p.line(x, 0, x, p.height);
+      for (let y = cy % GRID_SPACING; y <= p.height; y += GRID_SPACING) p.line(0, y, p.width, y);
       p.stroke(255, 35);
       p.strokeWeight(0.7);
-      p.line(p.width / 2, 0, p.width / 2, p.height);
-      p.line(0, p.height / 2, p.width, p.height / 2);
+      p.line(cx, 0, cx, p.height);
+      p.line(0, cy, p.width, cy);
       p.pop();
     }
 
-    // Arestas desenhadas como na versão original: cada linha e cada traço do
-    // tracejado é um segmento curto e independente. No Chrome com aceleração
-    // gráfica isto é bastante mais rápido do que um só caminho longo ou do que
-    // o tracejado nativo do canvas (setLineDash), que testei e engasgava o desenho.
+    /*
+      Arestas: cada linha e cada traço do tracejado (8 / 5) é um segmento curto,
+      como na versão original, mas os segmentos são juntados em blocos de
+      EDGE_BATCH subcaminhos e traçados com um só stroke por bloco. A imagem é a
+      mesma (medi o brilho médio: igual), e é 2 a 4 vezes mais rápido, o que
+      conta porque o número de linhas cresce com o quadrado do número de
+      palavras. O tracejado nativo (setLineDash) não é usado: engasgava o desenho.
+    */
+    const EDGE_BATCH = 1000;
+
     function drawEdges() {
       const ctx = p.drawingContext;
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 0.3 * SCALE;
       ctx.setLineDash([]);
 
-      for (const [a, b] of sameEdges) {
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.stroke();
-      }
+      let k = 0;
+      ctx.beginPath();
+      const add = (x1, y1, x2, y2) => {
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        if (++k >= EDGE_BATCH) { ctx.stroke(); ctx.beginPath(); k = 0; }
+      };
+
+      for (const [a, b] of sameEdges) add(a.x, a.y, b.x, b.y);
 
       const dash = 8 * SCALE;
       const step = 13 * SCALE; // traço de 8 + intervalo de 5
@@ -404,12 +444,10 @@
         for (let t = 0; t < len; t += step) {
           const s = Math.min(dash, len - t);
           const sx = a.x + ux * t, sy = a.y + uy * t;
-          ctx.beginPath();
-          ctx.moveTo(sx, sy);
-          ctx.lineTo(sx + ux * s, sy + uy * s);
-          ctx.stroke();
+          add(sx, sy, sx + ux * s, sy + uy * s);
         }
       }
+      if (k > 0) ctx.stroke();
     }
 
     /*
@@ -688,8 +726,9 @@
       cartesianGrid();
       if (C.EDGES === "network") drawEdges();
       else drawPath();
+      const dt = Math.min(4, Math.max(0, p.deltaTime / (1000 / 60)));
       for (const n of nodes) {
-        if (!paused) n.update();
+        if (!paused) n.update(dt);
         n.display(now);
       }
       drawFlash(now);

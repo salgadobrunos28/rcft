@@ -51,8 +51,22 @@ The scale follows the screen on its own: on a 32" TV the text has the same physi
 - The last valid dataset is cached in the browser. If the network or the Apps Script fails, the field keeps showing the cached corpus. It never falls back to invented data.
 - Text is transparent HTML over the canvas: nodes and edges stay visible underneath it, as in the original sketch.
 - Every word is linked to every other by a straight line: solid when both answers come from the same country, dashed when not (`EDGES: "network"` in `js/config.js`). `EDGES: "path"` switches to one continuous curved line through the words in order of arrival (Catmull-Rom converted to cubic Bezier, `PATH_TENSION`); it was tested and set aside.
-- Lines are drawn as independent short segments, as in the original sketch. A single long dashed path (`setLineDash`) proved several times slower in Chrome.
+- Lines are drawn as short segments, as in the original sketch (dashes of 8 and gaps of 5), grouped into batches of 1000 per stroke: the same image, 2 to 4 times faster than one stroke per segment. The native dash (`setLineDash`) is not used; it proved slower in Chrome.
+- Words drift up to the frame and bounce off it; the frame's graduation marks the 80 px grid from the centre, so the centre mark belongs to the series and the numbers are the same pixel coordinates as the tables.
 - The form sends all six fields with `keepalive` and waits only 1.5 seconds: if the request fails in that window (no network, for instance) the fields stay filled so the participant can try again; otherwise it thanks them and returns to the map, where the word appears at once from a local copy until the sheet confirms it.
+
+## Raspberry Pi
+
+The installation runs in Chromium on Raspberry Pi OS with no changes. Points to keep in mind:
+
+- Every word is linked to every other, so the number of lines grows with the square of the number of words (37 words: 666 lines; 80 words: 3160; 150 words: 11175). Measured in headless Chromium (software rendering, no GPU), 1920x1080: about 60 fps with 38 words, 18 with 80, 6 with 150; at 1280x720: 60, 30 and 8. On a Pi the numbers will be lower. The drift speed does not depend on the frame rate, so a slower device moves at the same pace, only less smoothly.
+- A Raspberry Pi 5 is the safer choice. On a Pi 4, or once the corpus grows, set the output to 1280x720: the scale adjusts on its own (text keeps the same size on the TV) and the drawing is noticeably lighter.
+- Open the GitHub Pages address directly, not the Cargo page, which adds its own scripts and an iframe: `https://salgadobrunos28.github.io/rcft/installation.html`
+- Kiosk mode, started with the desktop (for example in `~/.config/labwc/autostart` on recent versions; the command is `chromium` or `chromium-browser` depending on the version):
+  `chromium --kiosk --noerrdialogs --disable-infobars https://salgadobrunos28.github.io/rcft/installation.html`
+- Turn off screen blanking (raspi-config, Display Options) and the TV's overscan.
+- To check the frame rate on the Pi, add `?debug=1` to the address or press `d`.
+- Without network the screen keeps showing the last corpus it received; new words appear when the connection returns.
 
 ## Updating
 

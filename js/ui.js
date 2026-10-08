@@ -38,32 +38,34 @@
     el("rect", { class: "neat", x: m + 0.5, y: m + 0.5, width: W - 2 * m - 1, height: H - 2 * m - 1 });
 
     const len = (narrow ? 3 : 5) * S;
+    const L = (narrow ? 6 : 10) * S;   // marca dos eixos centrais, mais longa
     const labelEvery = 2 * GRID;
 
-    // Graduação: onde as linhas da grelha encontram a moldura.
-    for (let x = GRID; x < W - m; x += GRID) {
+    /*
+      Graduação: onde as linhas da grelha do mapa encontram a moldura. A grelha
+      parte do centro (js/sketch.js), por isso o traço do centro é um traço da
+      série, só mais longo, e os números (coordenadas em px, as mesmas da tabela)
+      ficam a cada 160 px a partir dele.
+    */
+    const cx = Math.round(W / 2), cy = Math.round(H / 2);
+    for (let x = cx % GRID; x < W - m; x += GRID) {
       if (x <= m) continue;
-      el("line", { class: "tick", x1: x + 0.5, y1: m - len, x2: x + 0.5, y2: m });
-      el("line", { class: "tick", x1: x + 0.5, y1: H - m, x2: x + 0.5, y2: H - m + len });
-      if (!narrow && x % labelEvery === 0) {
-        el("text", { x: x, y: H - m + 14 * S, "text-anchor": "middle" }, String(x));
+      const k = x === cx ? "tick major" : "tick", l = x === cx ? L : len;
+      el("line", { class: k, x1: x + 0.5, y1: m - l, x2: x + 0.5, y2: m });
+      el("line", { class: k, x1: x + 0.5, y1: H - m, x2: x + 0.5, y2: H - m + l });
+      if (!narrow && Math.abs(x - cx) % labelEvery === 0) {
+        el("text", { x: x, y: H - m + (x === cx ? 18 : 14) * S, "text-anchor": "middle" }, String(x));
       }
     }
-    for (let y = GRID; y < H - m; y += GRID) {
+    for (let y = cy % GRID; y < H - m; y += GRID) {
       if (y <= m) continue;
-      el("line", { class: "tick", x1: m - len, y1: y + 0.5, x2: m, y2: y + 0.5 });
-      el("line", { class: "tick", x1: W - m, y1: y + 0.5, x2: W - m + len, y2: y + 0.5 });
-      if (!narrow && y % labelEvery === 0) {
-        el("text", { x: m - 8 * S, y: y + 3 * S, "text-anchor": "end" }, String(y));
+      const k = y === cy ? "tick major" : "tick", l = y === cy ? L : len;
+      el("line", { class: k, x1: m - l, y1: y + 0.5, x2: m, y2: y + 0.5 });
+      el("line", { class: k, x1: W - m, y1: y + 0.5, x2: W - m + l, y2: y + 0.5 });
+      if (!narrow && Math.abs(y - cy) % labelEvery === 0) {
+        el("text", { x: m - (y === cy ? 12 : 8) * S, y: y + 3 * S, "text-anchor": "end" }, String(y));
       }
     }
-
-    // Eixos centrais do mapa: marca mais longa.
-    const cx = Math.round(W / 2) + 0.5, cy = Math.round(H / 2) + 0.5, L = (narrow ? 6 : 10) * S;
-    el("line", { class: "tick major", x1: cx, y1: m - L, x2: cx, y2: m });
-    el("line", { class: "tick major", x1: cx, y1: H - m, x2: cx, y2: H - m + L });
-    el("line", { class: "tick major", x1: m - L, y1: cy, x2: m, y2: cy });
-    el("line", { class: "tick major", x1: W - m, y1: cy, x2: W - m + L, y2: cy });
   }
 
   // ---------- dados ----------
