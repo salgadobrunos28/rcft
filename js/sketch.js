@@ -325,6 +325,12 @@
     }
 
     function updateQRLabel() {
+      // Instalação no sistema da folha: x e y em colunas, como na tabela.
+      const qx = document.getElementById("qr-x"), qy = document.getElementById("qr-y");
+      if (qx && qy) {
+        qx.textContent = nextPos ? nextPos.x.toFixed(1) : "--";
+        qy.textContent = nextPos ? nextPos.y.toFixed(1) : "--";
+      }
       const c = document.getElementById("qr-coords");
       if (!c) return;
       c.textContent = nextPos
@@ -489,9 +495,12 @@
     }
 
     // Versão em tabela (palavra, x, y): linhas criadas uma vez e atualizadas.
+    // Com data-mark-new, a linha de uma palavra acabada de chegar leva a classe
+    // is-new enquanto o anel dura (a instalação inverte-a).
     let coordRows = [];
     function updateCoordsTable() {
       const lines = Math.min(nodes.length, parseInt(el.coords.dataset.lines, 10) || coordLines);
+      const markNew = "markNew" in el.coords.dataset;
       if (coordRows.length !== lines) {
         el.coords.textContent = "";
         coordRows = [];
@@ -499,6 +508,7 @@
           const row = document.createElement("div");
           row.className = "r-row";
           const cells = [0, 1, 2].map(() => row.appendChild(document.createElement("span")));
+          cells.row = row;
           el.coords.appendChild(row);
           coordRows.push(cells);
         }
@@ -506,10 +516,12 @@
       const start = nodes.length - lines;
       for (let i = 0; i < lines; i++) {
         const n = nodes[start + i];
-        const [w, x, y] = coordRows[i];
+        const cells = coordRows[i];
+        const [w, x, y] = cells;
         if (w.textContent !== n.label) w.textContent = n.label;
         x.textContent = n.x.toFixed(1);
         y.textContent = n.y.toFixed(1);
+        if (markNew) cells.row.classList.toggle("is-new", n.bornAt !== null || n.highlight === true);
       }
     }
 
@@ -562,6 +574,8 @@
     // (se ativado com ?qr=1) fica por cima da legenda, à esquerda.
     function layoutQR() {
       if (!el.qr || el.qr.hidden) return;
+      // Instalação no sistema da folha: o bloco do QR é posto pelo CSS (css/install.css).
+      if (el.qr.classList.contains("i-qr")) return;
       const size = 96 * SCALE;
       const frame = 6 * SCALE;
       const m = 40 * SCALE;

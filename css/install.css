@@ -1,0 +1,98 @@
+/*
+  Relational Cartography (rcft): a instalação no sistema da folha de mapa.
+
+  Os blocos são os do site (css/ui.css): leituras com cabeçalho e filete em
+  cima, blocos com moldura em baixo.
+    em cima à esquerda: últimas entradas    em cima à direita: legenda
+    em baixo à esquerda: título e totais    em baixo à direita: QR e próxima entrada
+  Para ecrãs grandes, cada bloco é ampliado inteiro (zoom) pelo fator ?scale=,
+  incluindo a distância às bordas; a moldura (js/ui.js) usa o mesmo fator.
+*/
+
+.i-block { zoom: var(--s); }
+
+html[data-mode="install"] #sheet text { font-size: calc(8px * var(--s)); }
+
+/* ---------- em cima: leituras ---------- */
+
+html[data-mode="install"] .readout {
+  left: calc(var(--m) + var(--in));
+  right: auto;
+  top: calc(var(--m) + var(--in));
+  bottom: auto;
+}
+
+.i-legend {
+  position: fixed;
+  z-index: 2;
+  right: calc(var(--m) + var(--in));
+  top: calc(var(--m) + var(--in));
+  font-size: var(--t-s);
+  line-height: 1.8;
+  pointer-events: none;
+}
+
+/* Uma coluna, com o ritmo das linhas da tabela. */
+.i-legend .c-legend { grid-template-columns: auto; gap: 0; padding-right: 4px; }
+
+/* ---------- em baixo: blocos ---------- */
+
+html[data-ui="sheet"] #qr.i-qr {
+  --qr-size: 96px;
+  position: fixed;
+  z-index: 2;
+  right: calc(var(--m) + var(--in));
+  bottom: calc(var(--m) + var(--in) + var(--qr-lift, 0px));
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  font-size: var(--t-s);
+  pointer-events: none;
+}
+
+.q-text {
+  width: 236px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+}
+
+.q-cta {
+  margin: 0;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.q-next {
+  margin-top: auto;
+  padding: 0 12px 8px;
+  line-height: 1.8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* O lugar da palavra que ainda não chegou: um campo por preencher. */
+.q-blank::before { content: "__________"; letter-spacing: -0.02em; }
+
+#qr.i-qr #qr-code {
+  box-sizing: content-box;
+  padding: 8px;
+}
+
+/* ---------- linha nova na tabela ---------- */
+/* A palavra acabada de chegar fica invertida enquanto o anel dura e depois esbate. */
+
+#coords[data-mark-new] .r-row { transition: background-color 1.4s ease-out, color 1.4s ease-out; }
+#coords[data-mark-new] .r-row.is-new { background: #fff; color: var(--blue); transition: none; }
+
+/* ---------- ecrãs estreitos ---------- */
+/* A instalação é para um ecrã grande; num telemóvel fica o mapa, a tabela e o título. */
+
+@media (max-width: 767px) {
+  html[data-mode="install"] .readout { top: calc(var(--m) + var(--in)); }
+  .i-legend,
+  html[data-ui="sheet"] #qr.i-qr { display: none !important; }
+}

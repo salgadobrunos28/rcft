@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" data-ui="sheet" data-mode="install">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Relational Cartography (rcft) - Installation</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0018ff">
+  <link rel="stylesheet" href="vendor/fonts/fragment-mono.css">
+  <link rel="stylesheet" href="css/rcft.css?v=31p">
+  <link rel="stylesheet" href="css/ui.css?v=31p">
+  <link rel="stylesheet" href="css/install.css?v=31p">
+</head>
+<!--
+  Pré-visualização da instalação no sistema da folha de mapa (ainda não publicada
+  em install.html). Os quatro cantos mantêm a disposição da instalação:
+    em cima à esquerda: últimas entradas    em cima à direita: legenda
+    em baixo à esquerda: título e totais    em baixo à direita: QR e próxima entrada
+  Em cima, leituras (cabeçalho e filete); em baixo, blocos com moldura.
+-->
+<body class="map">
+  <div id="stage" aria-hidden="true"></div>
+  <svg id="sheet" aria-hidden="true"></svg>
+
+  <section class="i-block readout" aria-label="Latest entries">
+    <div class="r-row r-head"><span>Latest entries</span><span>x</span><span>y</span></div>
+    <div id="coords" data-format="table" data-lines="10" data-mark-new></div>
+  </section>
+
+  <section class="i-block i-legend" aria-label="Legend">
+    <div class="r-head">Legend</div>
+    <ul class="c-legend">
+      <li><svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>single response</li>
+      <li><svg class="pulse" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>repeated word</li>
+      <li><svg viewBox="0 0 24 4" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="2" x2="24" y2="2"/></svg>same country</li>
+      <li><svg viewBox="0 0 24 4" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="2" x2="24" y2="2" stroke-dasharray="5 3"/></svg>different country</li>
+    </ul>
+  </section>
+
+  <aside class="i-block cartouche" aria-label="Work">
+    <div class="c-head">
+      <h1 class="c-title">Relational Cartography</h1>
+      <span class="c-meta">2026</span>
+    </div>
+    <ul class="c-stats" aria-label="Corpus">
+      <li><span class="c-n" id="st-responses">--</span>responses</li>
+      <li><span class="c-n" id="st-words">--</span>words</li>
+      <li><span class="c-n" id="st-origins">--</span>origins</li>
+      <li class="c-wide">last entry<span id="st-last">--</span></li>
+    </ul>
+  </aside>
+
+  <div id="qr" class="i-block i-qr" hidden>
+    <div class="q-text">
+      <p class="q-cta">Scan to add a word</p>
+      <div class="q-next">
+        <div class="r-row r-head"><span>Next entry</span><span>x</span><span>y</span></div>
+        <div class="r-row"><span class="q-blank" aria-label="your word"></span><span id="qr-x">--</span><span id="qr-y">--</span></div>
+      </div>
+    </div>
+    <div id="qr-code"></div>
+  </div>
+
+  <pre id="debug" hidden></pre>
+
+  <script>window.RCFT_VERSION = 31; window.RCFT_MODE = "install";</script>
+  <script src="js/config.js?v=31p"></script>
+  <script src="js/data.js?v=31p"></script>
+  <script src="vendor/p5-1.9.0.min.js"></script>
+  <script src="vendor/qrcode-generator-1.4.4.js"></script>
+  <script src="js/ui.js?v=31p"></script>
+  <script src="js/sketch.js?v=31p"></script>
+</body>
+</html>
