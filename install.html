@@ -1,68 +1,69 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-ui="sheet" data-mode="install" data-scale="auto">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Relational Cartography (rcft) - Installation</title>
   <meta name="robots" content="noindex">
-  <meta name="description" content="A generative system that traces the shifting relations between words, people and territories. The work invites each visitor to define in a single word what a border is.">
-  <meta property="og:title" content="Relational Cartography (rcft)">
-  <meta property="og:description" content="A generative system that traces the shifting relations between words, people and territories.">
-  <meta property="og:type" content="website">
   <meta name="theme-color" content="#0018ff">
-  <link rel="stylesheet" href="css/rcft.css?v=32">
+  <link rel="stylesheet" href="vendor/fonts/fragment-mono.css">
+  <link rel="stylesheet" href="css/rcft.css?v=33">
+  <link rel="stylesheet" href="css/ui.css?v=33">
+  <link rel="stylesheet" href="css/install.css?v=33">
 </head>
 <!--
-  Página da instalação (abre-se através de installation.html).
-  Mantém a disposição da instalação: coordenadas em cima à esquerda, legenda em
-  cima à direita, título em baixo à esquerda e QR code em baixo à direita.
+  Instalação (abre-se através de installation.html), no sistema da folha de mapa.
+  Dois blocos nos cantos de baixo:
+    à esquerda: a cartouche do site (título, totais e legenda), sem texto nem botão
+    à direita:  últimas entradas, próxima entrada e QR
+  Escala automática pelo lado menor do ecrã (data-scale="auto"; ?scale=1.5 fixa um valor).
 -->
 <body class="map">
   <div id="stage" aria-hidden="true"></div>
+  <svg id="sheet" aria-hidden="true"></svg>
 
-  <h1 id="title" class="panel">RELATIONAL CARTOGRAPHY</h1>
-
-  <section id="about" class="panel">
-    <p>A generative system that traces the shifting relations between words, people and territories. The work invites each visitor to define in a single word what a border is.</p>
-    <p>Every answer becomes a node in a drifting field, where meanings move closer and apart without settling into a definition.</p>
-    <p>The piece adopts the visual grammar of data and surveillance systems but refuses their function, it accumulates language without turning it into actionable knowledge.</p>
-  </section>
-
-  <div id="legend" class="panel" aria-label="Legend">
-    <div class="row">
-      <svg class="dot" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>
-      <span>static = single response</span>
+  <aside class="i-block cartouche" aria-label="Work">
+    <div class="c-head">
+      <h1 class="c-title">Relational Cartography</h1>
+      <span class="c-meta">2026</span>
     </div>
-    <div class="row">
-      <svg class="dot pulse" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>
-      <span>pulsing = repeated words</span>
-    </div>
-    <div class="row">
-      <svg class="ln" viewBox="0 0 80 2" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="1" x2="80" y2="1"/></svg>
-      <span>same country</span>
-    </div>
-    <div class="row">
-      <svg class="ln" viewBox="0 0 80 2" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="1" x2="80" y2="1" stroke-dasharray="8 5"/></svg>
-      <span>different country</span>
-    </div>
-  </div>
+    <ul class="c-stats" aria-label="Corpus">
+      <li><span class="c-n" id="st-responses">--</span>responses</li>
+      <li><span class="c-n" id="st-words">--</span>words</li>
+      <li><span class="c-n" id="st-origins">--</span>origins</li>
+      <li class="c-wide">last entry<span id="st-last">--</span></li>
+    </ul>
+    <ul class="c-legend" aria-label="Legend">
+      <li><svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>single response</li>
+      <li><svg class="pulse" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>repeated word</li>
+      <li><svg viewBox="0 0 24 4" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="2" x2="24" y2="2"/></svg>same country</li>
+      <li><svg viewBox="0 0 24 4" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="2" x2="24" y2="2" stroke-dasharray="5 3"/></svg>different country</li>
+    </ul>
+  </aside>
 
-  <div id="coords" class="panel" aria-hidden="true"></div>
-
-  <a id="contribute" class="panel button" href="contribute.html">Contribute a response</a>
-
-  <div id="qr" class="panel" hidden>
-    <div id="qr-frame"><div id="qr-code"></div></div>
-    <div id="qr-label"><span>scan = add a word</span><span id="qr-coords"></span></div>
-  </div>
+  <aside class="i-block i-panel" aria-label="Entries">
+    <section class="i-sec">
+      <div class="r-row r-head"><span>Latest entries</span><span>x</span><span>y</span></div>
+      <div id="coords" data-format="table" data-lines="5" data-mark-new></div>
+    </section>
+    <section class="i-sec q-next">
+      <div class="r-row r-head"><span>Next entry</span><span>x</span><span>y</span></div>
+      <div class="r-row"><span class="q-blank" aria-label="your word"></span><span id="qr-x">--</span><span id="qr-y">--</span></div>
+    </section>
+    <div id="qr" class="i-qr" hidden>
+      <p class="q-cta">Scan to<br>add a word</p>
+      <div id="qr-code"></div>
+    </div>
+  </aside>
 
   <pre id="debug" hidden></pre>
 
-  <script>window.RCFT_VERSION = 32;</script>
-  <script src="js/config.js?v=32"></script>
-  <script src="js/data.js?v=32"></script>
+  <script>window.RCFT_VERSION = 33; window.RCFT_MODE = "install";</script>
+  <script src="js/config.js?v=33"></script>
+  <script src="js/data.js?v=33"></script>
   <script src="vendor/p5-1.9.0.min.js"></script>
   <script src="vendor/qrcode-generator-1.4.4.js"></script>
-  <script src="js/sketch.js?v=32"></script>
+  <script src="js/ui.js?v=33"></script>
+  <script src="js/sketch.js?v=33"></script>
 </body>
 </html>
