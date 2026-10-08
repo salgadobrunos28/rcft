@@ -48,9 +48,9 @@ Example for the exhibition screen: `https://salgadobrunos28.github.io/rcft/insta
 - New responses are merged into the existing field every 30 seconds. Existing nodes keep their position; new words appear with a short ring. In the installation, a new word also triggers a white full-screen flash fading out in under a second (at most one flash every 3 seconds).
 - The last valid dataset is cached in the browser. If the network or the Apps Script fails, the field keeps showing the cached corpus. It never falls back to invented data.
 - Text is transparent HTML over the canvas: nodes and edges stay visible underneath it, as in the original sketch.
-- One continuous curved line runs through the words in order of arrival (Catmull-Rom converted to cubic Bezier, `PATH_TENSION` in `js/config.js`). Each stretch is solid when both answers come from the same country and dashed when not; each new word extends the line from its end. `EDGES: "network"` restores the previous straight network (every word linked to every other).
+- Every word is linked to every other by a straight line: solid when both answers come from the same country, dashed when not (`EDGES: "network"` in `js/config.js`). `EDGES: "path"` switches to one continuous curved line through the words in order of arrival (Catmull-Rom converted to cubic Bezier, `PATH_TENSION`); it was tested and set aside.
 - Lines are drawn as independent short segments, as in the original sketch. A single long dashed path (`setLineDash`) proved several times slower in Chrome.
-- The form sends all six fields and thanks the participant once Google has processed the submission; on a network error the fields stay filled so they can try again.
+- The form sends all six fields with `keepalive` and waits only 1.5 seconds: if the request fails in that window (no network, for instance) the fields stay filled so the participant can try again; otherwise it thanks them and returns to the map, where the word appears at once from a local copy until the sheet confirms it.
 
 ## Updating
 
