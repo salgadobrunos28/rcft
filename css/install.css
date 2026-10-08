@@ -19,7 +19,7 @@ html[data-mode="install"] #sheet text { font-size: calc(8px * var(--s)); }
   z-index: 2;
   right: calc(var(--m) + var(--in));
   bottom: calc(var(--m) + var(--in) + var(--panel-lift, 0px));
-  width: 344px;
+  width: 260px;   /* a tabela tem as proporções da do site (236 px) */
   border: 1px solid var(--line);
   font-size: var(--t-s);
   line-height: 1.8;
