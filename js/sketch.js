@@ -410,27 +410,71 @@
 
     /*
       Arestas: cada linha e cada traço do tracejado (8 / 5) é um segmento curto,
-      como na versão original, mas os segmentos são juntados em blocos de
-      EDGE_BATCH subcaminhos e traçados com um só stroke por bloco. A imagem é a
-      mesma (medi o brilho médio: igual), e é 2 a 4 vezes mais rápido, o que
-      conta porque o número de linhas cresce com o quadrado do número de
-      palavras. O tracejado nativo (setLineDash) não é usado: engasgava o desenho.
+      como na versão original. Há duas formas de os traçar, com a mesma imagem:
+        "segments"  um stroke por segmento. Com aceleração gráfica (Chrome num
+                    Mac, por exemplo) é a forma rápida.
+        "batched"   segmentos juntos em blocos de EDGE_BATCH, um stroke por bloco.
+                    Sem aceleração gráfica (renderização por software) é 2 a 4
+                    vezes mais rápida; com aceleração, um caminho com pedaços
+                    espalhados pelo ecrã inteiro é rasterizado inteiro e o desenho
+                    cai para poucos fps (medido: cerca de 4 fps num Mac).
+      Começa em "segments". Se o aparelho não passar de EDGE_PROBE_FPS, o sketch
+      mede a outra forma durante uns segundos e fica com a mais rápida; volta a
+      medir quando o número de palavras cresce um quarto. ?edges=segments ou
+      ?edges=batched fixa uma delas. O tracejado nativo (setLineDash) não é usado.
     */
     const EDGE_BATCH = 1000;
+    const EDGE_PROBE_FPS = 30;
+    const EDGE_PARAM = params.get("edges");
+    let edgeMode = EDGE_PARAM === "batched" ? "batched" : "segments";
+    const probe = EDGE_PARAM ? null : { ms: 0, mt: 0, frames: 0, fps: {}, words: 0, done: false };
+
+    function probeEdges(dtMs) {
+      if (!probe || C.EDGES !== "network" || nodes.length < 2) return;
+      if (probe.done) {
+        if (nodes.length < probe.words * 1.25) return;
+        Object.assign(probe, { ms: 0, mt: 0, frames: 0, fps: {}, done: false });
+        edgeMode = "segments";
+      }
+      if (document.hidden || paused || dtMs > 1000) { probe.ms = probe.mt = probe.frames = 0; return; }
+      probe.ms += dtMs;
+      if (probe.ms < 600) return;          // aquecimento de cada forma, não conta
+      probe.mt += dtMs;
+      probe.frames++;
+      if (probe.mt < 2500) return;
+      const fps = probe.frames / (probe.mt / 1000);
+      probe.fps[edgeMode] = Math.round(fps);
+      probe.ms = probe.mt = probe.frames = 0;
+      if (edgeMode === "segments" && fps < EDGE_PROBE_FPS && !("batched" in probe.fps)) {
+        edgeMode = "batched";
+        return;
+      }
+      if ("batched" in probe.fps && probe.fps.batched <= probe.fps.segments * 1.1) edgeMode = "segments";
+      probe.done = true;
+      probe.words = nodes.length;
+    }
 
     function drawEdges() {
       const ctx = p.drawingContext;
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 0.3 * SCALE;
       ctx.setLineDash([]);
+      const batched = edgeMode === "batched";
 
       let k = 0;
-      ctx.beginPath();
-      const add = (x1, y1, x2, y2) => {
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        if (++k >= EDGE_BATCH) { ctx.stroke(); ctx.beginPath(); k = 0; }
-      };
+      if (batched) ctx.beginPath();
+      const add = batched
+        ? (x1, y1, x2, y2) => {
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            if (++k >= EDGE_BATCH) { ctx.stroke(); ctx.beginPath(); k = 0; }
+          }
+        : (x1, y1, x2, y2) => {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          };
 
       for (const [a, b] of sameEdges) add(a.x, a.y, b.x, b.y);
 
@@ -447,7 +491,7 @@
           add(sx, sy, sx + ux * s, sy + uy * s);
         }
       }
-      if (k > 0) ctx.stroke();
+      if (batched && k > 0) ctx.stroke();
     }
 
     /*
@@ -580,6 +624,7 @@
         C.EDGES === "network"
           ? `edges      ${sameEdges.length + diffEdges.length} (same ${sameEdges.length} / different ${diffEdges.length})`
           : `path       ${Math.max(0, nodes.length - 1)} segments`,
+        `drawing    ${edgeMode}${probe ? "  " + Object.entries(probe.fps).map(([k, v]) => k + " " + v + " fps").join(" / ") + (probe.done ? "" : " (measuring)") : " (fixed)"}`,
         `last sync  ${t}`,
         `error      ${lastError || "-"}`,
         `fps        ${Math.round(p.frameRate())}`,
@@ -726,6 +771,7 @@
       cartesianGrid();
       if (C.EDGES === "network") drawEdges();
       else drawPath();
+      probeEdges(p.deltaTime);
       const dt = Math.min(4, Math.max(0, p.deltaTime / (1000 / 60)));
       for (const n of nodes) {
         if (!paused) n.update(dt);
