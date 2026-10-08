@@ -349,3 +349,18 @@ html[data-ui="sheet"] body.form {
 }
 
 html[data-ui="sheet"] #rcft-form { margin-top: 0; }
+
+/* O mapa a correr por trás do formulário, esbatido. */
+body.form #stage.f-backdrop { opacity: 0.3; pointer-events: none; }
+
+/* No computador o formulário fica ao centro da página (margin auto evita
+   cortar o topo se a janela for mais baixa do que o formulário). */
+@media (min-width: 768px) {
+  .f-wrap {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  html[data-ui="sheet"] .f-wrap > #rcft-form { margin-block: auto; }
+}

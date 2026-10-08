@@ -469,6 +469,7 @@
 
     let lastCoordsAt = 0;
     function updateCoords(force) {
+      if (!el.coords) return;   // página sem painel de coordenadas (fundo do formulário)
       const now = performance.now();
       if (!force && now - lastCoordsAt < 100) return;
       lastCoordsAt = now;
@@ -513,7 +514,7 @@
     }
 
     function updateDebug() {
-      if (el.debug.hidden) return;
+      if (!el.debug || el.debug.hidden) return;
       const t = lastSync ? lastSync.toLocaleTimeString() : "-";
       el.debug.textContent = [
         `mode       ${MODE}  scale ${SCALE}`,
@@ -560,7 +561,7 @@
     // Na instalação fica no canto inferior direito, nas margens do texto; no site
     // (se ativado com ?qr=1) fica por cima da legenda, à esquerda.
     function layoutQR() {
-      if (el.qr.hidden) return;
+      if (!el.qr || el.qr.hidden) return;
       const size = 96 * SCALE;
       const frame = 6 * SCALE;
       const m = 40 * SCALE;
@@ -607,7 +608,7 @@
 
       buildQR();
       layoutQR();
-      if (params.get("debug") === "1") el.debug.hidden = false;
+      if (params.get("debug") === "1" && el.debug) el.debug.hidden = false;
       applyResponsive();
       rollNextPos();
 
@@ -675,10 +676,13 @@
     };
 
     p.keyPressed = () => {
+      // Não reage às teclas enquanto se escreve num campo (formulário).
+      const a = document.activeElement;
+      if (a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable)) return;
       const k = String(p.key).toLowerCase();
       if (p.key === " ") paused = !paused;
       else if (k === "r") refresh();
-      else if (k === "d") { el.debug.hidden = !el.debug.hidden; updateDebug(); }
+      else if (k === "d" && el.debug) { el.debug.hidden = !el.debug.hidden; updateDebug(); }
       else if (k === "f") p.fullscreen(!p.fullscreen());
       else if (k === "t") { flashAt = -Infinity; triggerFlash(); }
     };
