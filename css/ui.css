@@ -128,7 +128,7 @@ html[data-ui="sheet"] body { font-family: var(--mono); }
 }
 
 /* Totais numa linha; a última entrada na linha seguinte. */
-.c-stats { grid-template-columns: repeat(3, auto); justify-content: space-between; }
+.c-stats { grid-template-columns: repeat(3, auto); justify-content: start; column-gap: 20px; }
 .c-stats li { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .c-stats .c-wide { grid-column: 1 / -1; gap: 8px; }
 

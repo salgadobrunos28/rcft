@@ -8,8 +8,8 @@
   <meta name="description" content="A generative system that traces the shifting relations between words, people and territories. The work invites each visitor to define in a single word what a border is.">
   <meta name="theme-color" content="#0018ff">
   <link rel="stylesheet" href="vendor/fonts/fragment-mono.css">
-  <link rel="stylesheet" href="css/rcft.css?v=27">
-  <link rel="stylesheet" href="css/ui.css?v=27">
+  <link rel="stylesheet" href="css/rcft.css?v=28">
+  <link rel="stylesheet" href="css/ui.css?v=28">
 </head>
 <!--
   Pré-visualização da nova interface do site (folha de mapa).
@@ -35,6 +35,10 @@
         <p>The piece adopts the visual grammar of data and surveillance systems but refuses their function, it accumulates language without turning it into actionable knowledge.</p>
       </div>
     </details>
+    <script>
+      // Texto aberto no computador, fechado no telemóvel.
+      if (window.matchMedia("(min-width: 768px)").matches) document.querySelector(".c-box").open = true;
+    </script>
 
     <ul class="c-stats" aria-label="Corpus">
       <li><span class="c-n" id="st-responses">--</span>responses</li>
@@ -61,12 +65,12 @@
   <div id="qr" hidden><div id="qr-frame"><div id="qr-code"></div></div><div id="qr-label"><span></span><span id="qr-coords"></span></div></div>
   <pre id="debug" hidden></pre>
 
-  <script>window.RCFT_VERSION = 27;</script>
-  <script src="js/config.js?v=27"></script>
-  <script src="js/data.js?v=27"></script>
+  <script>window.RCFT_VERSION = 28;</script>
+  <script src="js/config.js?v=28"></script>
+  <script src="js/data.js?v=28"></script>
   <script src="vendor/p5-1.9.0.min.js"></script>
   <script src="vendor/qrcode-generator-1.4.4.js"></script>
-  <script src="js/ui.js?v=27"></script>
-  <script src="js/sketch.js?v=27"></script>
+  <script src="js/ui.js?v=28"></script>
+  <script src="js/sketch.js?v=28"></script>
 </body>
 </html>
