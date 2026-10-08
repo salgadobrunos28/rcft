@@ -19,7 +19,7 @@ html[data-mode="install"] #sheet text { font-size: calc(8px * var(--s)); }
   z-index: 2;
   right: calc(var(--m) + var(--in));
   bottom: calc(var(--m) + var(--in) + var(--panel-lift, 0px));
-  width: 260px;   /* a tabela tem as proporções da do site (236 px) */
+  width: 212px;   /* colunas justas: a palavra mais longa do corpus tem 12 caracteres */
   border: 1px solid var(--line);
   font-size: var(--t-s);
   line-height: 1.8;
@@ -28,6 +28,9 @@ html[data-mode="install"] #sheet text { font-size: calc(8px * var(--s)); }
 }
 
 .i-panel > * + * { border-top: 1px solid var(--line); }
+
+.i-panel .r-row { grid-template-columns: 1fr 48px 48px; }
+.i-panel .r-head span:first-child { overflow: visible; }
 
 .i-sec { padding: 8px 12px 6px; }
 
@@ -52,7 +55,7 @@ html[data-ui="sheet"] #qr.i-qr {
   padding: 10px 12px;
   border-right: 1px solid var(--line);
   line-height: 1.5;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
