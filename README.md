@@ -8,17 +8,22 @@ Bruno Mesquita, 2026. p5.js, screen, steel.
 ## Structure
 
 ```
-index.html          the cartography (website)
-installation.html   the cartography in installation mode
-contribute.html     the contribution form
-css/rcft.css        all styles
+index.html          the website: cartography inside a map sheet (frame, cartouche, latest entries)
+contribute.html     the contribution form, same sheet system, map running faintly behind
+install.html        the cartography in installation mode (opened through installation.html)
+installation.html   entry point for the installation screen
+lab.html            formal variations (not public)
+css/rcft.css        base styles and installation layout
+css/ui.css          website interface (map sheet) and form
+js/ui.js            graduated frame and live totals for the website
 js/config.js        endpoints and timings (the file you normally edit)
 js/data.js          reading, normalising and caching responses
 js/sketch.js        p5.js sketch
 js/contribute.js    form submission and confirmation
 apps-script/Code.gs single Apps Script endpoint for reading and writing (optional upgrade)
 cargo/embed.html    iframe snippet and CSS for the Cargo pages
-vendor/             p5.js 1.9.0 (LGPL-2.1) and qrcode-generator 1.4.4 (MIT)
+vendor/             p5.js 1.9.0 (LGPL-2.1), qrcode-generator 1.4.4 (MIT), Fragment Mono (OFL)
+tools/              bump-version.sh
 ```
 
 ## URL parameters

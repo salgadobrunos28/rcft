@@ -7,12 +7,12 @@
   <meta name="robots" content="noindex">
   <style>html, body { margin: 0; background: rgb(0, 24, 255); }</style>
   <script>
-    // A instalação usa o mesmo index.html em modo instalação.
+    // A instalação abre install.html em modo instalação.
     // Outros parâmetros (por exemplo ?scale=1.5) passam para a frente.
     (function () {
       var q = new URLSearchParams(location.search);
       q.set("mode", "install");
-      location.replace("index.html?" + q.toString());
+      location.replace("install.html?" + q.toString());
     })();
   </script>
 </head>
