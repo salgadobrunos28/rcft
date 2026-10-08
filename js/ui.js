@@ -70,16 +70,11 @@
 
   window.addEventListener("rcft:data", e => {
     const d = e.detail;
+    if (!$("st-responses")) return;
     $("st-responses").textContent = d.responses;
     $("st-words").textContent = d.words;
     $("st-origins").textContent = d.origins;
     $("st-last").textContent = d.lastTs ? stamp(d.lastTs) : "--";
-  });
-
-  window.addEventListener("rcft:sync", e => {
-    const d = e.detail, t = d.time;
-    $("ui-sync").textContent = `${z(t.getHours())}:${z(t.getMinutes())}:${z(t.getSeconds())}`;
-    document.querySelector(".collar-status").classList.toggle("offline", !d.ok);
   });
 
   // Em telemóvel: só as cinco entradas mais recentes.

@@ -8,8 +8,8 @@
   <meta name="description" content="A generative system that traces the shifting relations between words, people and territories. The work invites each visitor to define in a single word what a border is.">
   <meta name="theme-color" content="#0018ff">
   <link rel="stylesheet" href="vendor/fonts/fragment-mono.css">
-  <link rel="stylesheet" href="css/rcft.css?v=28">
-  <link rel="stylesheet" href="css/ui.css?v=28">
+  <link rel="stylesheet" href="css/rcft.css?v=29">
+  <link rel="stylesheet" href="css/ui.css?v=29">
 </head>
 <!--
   Pré-visualização da nova interface do site (folha de mapa).
@@ -18,10 +18,6 @@
 <body class="map">
   <div id="stage" aria-hidden="true"></div>
   <svg id="sheet" aria-hidden="true"></svg>
-
-  <header class="collar">
-    <span class="collar-status"><span id="ui-sync">--:--:--</span></span>
-  </header>
 
   <aside class="cartouche" aria-label="About the work">
     <details class="c-box">
@@ -54,7 +50,7 @@
       <li><svg viewBox="0 0 24 4" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="2" x2="24" y2="2" stroke-dasharray="5 3"/></svg>different country</li>
     </ul>
 
-    <a id="contribute" class="c-cta" href="contribute.html">Contribute a response</a>
+    <a id="contribute" class="c-cta" href="preview-contribute.html">Contribute a response</a>
   </aside>
 
   <section class="readout" aria-label="Latest entries">
@@ -65,12 +61,12 @@
   <div id="qr" hidden><div id="qr-frame"><div id="qr-code"></div></div><div id="qr-label"><span></span><span id="qr-coords"></span></div></div>
   <pre id="debug" hidden></pre>
 
-  <script>window.RCFT_VERSION = 28;</script>
-  <script src="js/config.js?v=28"></script>
-  <script src="js/data.js?v=28"></script>
+  <script>window.RCFT_VERSION = 29;</script>
+  <script src="js/config.js?v=29"></script>
+  <script src="js/data.js?v=29"></script>
   <script src="vendor/p5-1.9.0.min.js"></script>
   <script src="vendor/qrcode-generator-1.4.4.js"></script>
-  <script src="js/ui.js?v=28"></script>
-  <script src="js/sketch.js?v=28"></script>
+  <script src="js/ui.js?v=29"></script>
+  <script src="js/sketch.js?v=29"></script>
 </body>
 </html>

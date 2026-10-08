@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 old=$(sed -E 's/[^0-9]//g' version.json)
 new=$((old + 1))
 printf '{ "v": %s }\n' "$new" > version.json
-sed -i.bak -E "s/window\.RCFT_VERSION = [0-9]+;/window.RCFT_VERSION = $new;/" index.html contribute.html preview.html
-sed -i.bak -E "s/\?v=[0-9]+\"/?v=$new\"/g" index.html contribute.html preview.html
-rm -f index.html.bak contribute.html.bak preview.html.bak
+sed -i.bak -E "s/window\.RCFT_VERSION = [0-9]+;/window.RCFT_VERSION = $new;/" index.html contribute.html preview.html preview-contribute.html
+sed -i.bak -E "s/\?v=[0-9]+\"/?v=$new\"/g" index.html contribute.html preview.html preview-contribute.html
+rm -f index.html.bak contribute.html.bak preview.html.bak preview-contribute.html.bak
 echo "versão $old -> $new"

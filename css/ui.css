@@ -47,26 +47,6 @@ html[data-ui="sheet"] body { font-family: var(--mono); }
   letter-spacing: 0.04em;
 }
 
-/* ---------- colar superior ---------- */
-
-.collar {
-  position: fixed;
-  z-index: 2;
-  top: 0;
-  left: var(--m);
-  right: var(--m);
-  height: var(--m);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  font-size: var(--t-s);
-  pointer-events: none;
-}
-
-/* Relógio da última leitura dos dados; esbatido se a leitura falhar. */
-.collar-status { color: #fff; font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
-.collar-status.offline { color: var(--dim); }
-
 /* ---------- cartouche ---------- */
 
 .cartouche {
@@ -205,13 +185,6 @@ html[data-ui="sheet"] #coords {
 @media (max-width: 767px) {
   html[data-ui="sheet"] { --m: 10px; --in: 8px; }
 
-  .collar {
-    top: calc(var(--m) + 1px);
-    left: calc(var(--m) + var(--in));
-    right: calc(var(--m) + var(--in));
-    height: 26px;
-  }
-
   .cartouche {
     left: calc(var(--m) + var(--in));
     right: calc(var(--m) + var(--in));
@@ -235,3 +208,144 @@ html[data-ui="sheet"] #coords {
   .r-head span:first-child { font-size: 0; }
   .r-head span:first-child::before { content: "Latest"; font-size: var(--t-xs); }
 }
+
+/* ---------- formulário (folha) ---------- */
+/*
+  O formulário é uma folha com o mesmo registo da cartouche: um bloco com
+  linhas finas entre as perguntas, numeradas; os campos são a própria linha
+  (sem caixa), com um sublinhado. O envio é a última linha, como o botão do mapa.
+  Espaçamentos proporcionais à altura do ecrã, para caber num telemóvel.
+*/
+
+html[data-ui="sheet"] body.form {
+  --f-pad: clamp(6px, 1.3vh, 12px);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.f-wrap {
+  width: 100%;
+  max-width: calc(560px + 2 * (var(--m) + var(--in)));
+  margin: 0 auto;
+  padding:
+    calc(var(--m) + var(--in) + env(safe-area-inset-top))
+    calc(var(--m) + var(--in) + env(safe-area-inset-right))
+    calc(var(--m) + var(--in) + env(safe-area-inset-bottom))
+    calc(var(--m) + var(--in) + env(safe-area-inset-left));
+  position: relative;
+  z-index: 2;
+}
+
+.f-sheet {
+  border: 1px solid var(--line);
+  font-size: var(--t-m);
+  line-height: 1.45;
+}
+
+.f-sheet > * + * { border-top: 1px solid var(--line); }
+
+.f-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: var(--f-pad) 12px;
+}
+
+.f-head .close { width: 12px; height: 12px; color: #fff; }
+
+.f-intro {
+  margin: 0;
+  padding: var(--f-pad) 12px;
+  font-size: var(--t-s);
+  color: var(--dim);
+}
+
+.f-row {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  column-gap: 8px;
+  padding: var(--f-pad) 12px;
+  transition: background-color .15s;
+}
+
+.f-row:focus-within { background: rgba(255, 255, 255, 0.07); }
+
+.f-n {
+  grid-row: 1 / span 2;
+  font-size: var(--t-s);
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+}
+
+.f-row label {
+  font-size: var(--t-s);
+  line-height: 1.45;
+}
+
+.f-row input,
+.f-row textarea {
+  display: block;
+  width: 100%;
+  margin-top: clamp(2px, 0.5vh, 5px);
+  padding: 2px 0 3px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 16px;            /* evita o zoom automático no iOS */
+  line-height: 1.35;
+  -webkit-appearance: none;
+  appearance: none;
+  resize: none;
+  overflow: hidden;
+}
+
+.f-row input:focus,
+.f-row textarea:focus { outline: none; border-bottom-color: #fff; }
+
+.f-submit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: var(--t-s);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.f-submit::after { content: "+"; font-size: 13px; letter-spacing: 0; }
+.f-submit:hover,
+.f-submit:focus-visible { background: #fff; color: var(--blue); outline: none; }
+.f-submit:disabled { opacity: 0.5; cursor: default; }
+.f-submit:disabled:hover { background: transparent; color: #fff; }
+
+.f-status {
+  margin: 0;
+  padding: 9px 12px;
+  font-size: var(--t-s);
+}
+
+.f-status:empty { display: none; }
+.f-status a { color: #fff; }
+
+@media (min-width: 768px) and (hover: hover) {
+  .f-row input,
+  .f-row textarea { font-size: 13px; }
+}
+
+html[data-ui="sheet"] #rcft-form { margin-top: 0; }

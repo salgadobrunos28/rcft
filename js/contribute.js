@@ -25,7 +25,8 @@
   // Dentro do Cargo (iframe), o fecho e o regresso depois do envio abrem a
   // página principal do rcft.cargo.site na janela inteira, e não dentro do iframe.
   const EMBEDDED = window.top !== window.self;
-  const HOME = EMBEDDED && C.SITE_URL ? C.SITE_URL : "./";
+  const HOME_LOCAL = document.body.dataset.home || "./";
+  const HOME = EMBEDDED && C.SITE_URL ? C.SITE_URL : HOME_LOCAL;
 
   function goHome() {
     if (EMBEDDED && C.SITE_URL) {
@@ -41,7 +42,7 @@
       }, 1500);
       return;
     }
-    location.href = "./";
+    location.href = HOME_LOCAL;
   }
 
   const close = document.querySelector(".close");
