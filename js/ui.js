@@ -9,13 +9,12 @@
   const NS = "http://www.w3.org/2000/svg";
   const root = document.documentElement;
 
-  // Na instalação, a moldura acompanha o fator ?scale= dos blocos (css/install.css).
-  // A graduação continua a marcar a grelha de 80 px do mapa.
-  const S = (function () {
-    if (root.dataset.mode !== "install") return 1;
-    const v = parseFloat(new URLSearchParams(location.search).get("scale"));
-    return Number.isFinite(v) ? Math.min(4, Math.max(0.5, v)) : 1;
-  })();
+  // Na instalação, a moldura acompanha a escala dos blocos (css/install.css), a
+  // mesma do sketch (js/data.js). A graduação continua a marcar a grelha de 80 px.
+  let S = 1;
+  function readScale() {
+    S = root.dataset.mode === "install" && window.RCFT_DATA ? window.RCFT_DATA.scale() : 1;
+  }
 
   function el(name, attrs, text) {
     const e = document.createElementNS(NS, name);
@@ -87,10 +86,14 @@
     stackBottom();
   });
 
-  // Em telemóvel: só as cinco entradas mais recentes.
-  if (window.innerWidth < 768) {
-    const coords = document.getElementById("coords");
-    if (coords) coords.dataset.lines = "5";
+  // Em telemóvel: só as cinco entradas mais recentes. Decidido a cada resize,
+  // porque dentro do Cargo o iframe começa sem tamanho.
+  const coords = document.getElementById("coords");
+  const LINES = coords ? coords.dataset.lines : null;
+  function setLines() {
+    const w = window.innerWidth;
+    if (!coords || !LINES || !(w > 0)) return;
+    coords.dataset.lines = w < 768 ? "5" : LINES;
   }
 
   /*
@@ -99,19 +102,21 @@
     o QR sobe e fica por cima do título, alinhado à direita.
   */
   function stackBottom() {
-    const qr = document.querySelector(".i-qr");
+    const panel = document.querySelector(".i-panel");
     const car = document.querySelector(".cartouche");
-    if (!qr || !car || qr.hidden) return;
-    root.style.setProperty("--qr-lift", "0px");
-    const a = car.getBoundingClientRect(), b = qr.getBoundingClientRect();
+    if (!panel || !car) return;
+    root.style.setProperty("--panel-lift", "0px");
+    const a = car.getBoundingClientRect(), b = panel.getBoundingClientRect();
     if (!a.width || !b.width) return;
     if (a.right + 16 * S > b.left) {
-      root.style.setProperty("--qr-lift", (a.height / S + 16) + "px");
+      root.style.setProperty("--panel-lift", (a.height / S + 16) + "px");
     }
   }
 
-  function layout() { drawSheet(); stackBottom(); }
+  function layout() { readScale(); setLines(); drawSheet(); stackBottom(); }
 
+  readScale();
+  setLines();
   drawSheet();
   let t = null;
   window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(layout, 120); });

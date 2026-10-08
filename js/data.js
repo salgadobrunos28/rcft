@@ -191,8 +191,31 @@
     } catch (_) { /* sem rede: tenta na próxima verificação */ }
   }
 
+  /*
+    Fator de escala da interface e do desenho, partilhado pelo sketch e pela moldura.
+      ?scale=1.5           valor fixo
+      ?scale=auto, ou      proporcional ao lado menor do ecrã (720 px = 1; 1080 px = 1.5),
+      data-scale="auto"    nunca abaixo de 1. Num televisor com a mesma diagonal, a peça
+                           fica com o mesmo tamanho físico seja Full HD ou HD; um ecrã
+                           ao alto usa a largura.
+    Sem nada, 1.
+  */
+  function scaleIsAuto() {
+    const q = new URLSearchParams(location.search).get("scale");
+    return q === "auto" || (q == null && document.documentElement.dataset.scale === "auto");
+  }
+
+  function scale() {
+    const v = parseFloat(new URLSearchParams(location.search).get("scale"));
+    if (Number.isFinite(v)) return Math.min(4, Math.max(0.5, v));
+    if (!scaleIsAuto()) return 1;
+    const side = Math.min(window.innerWidth, window.innerHeight);
+    if (!(side > 0)) return 1;   // iframe ainda sem tamanho: recalcula no resize
+    return Math.min(3, Math.max(1, Math.round(side / 720 * 100) / 100));
+  }
+
   window.RCFT_DATA = {
-    checkVersion,
+    checkVersion, scale, scaleIsAuto,
     fetchRows, loadCache, parseRows, normCountry,
     addPending, withPending, recentPendingWords
   };

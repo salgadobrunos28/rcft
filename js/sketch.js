@@ -9,6 +9,7 @@
 
   Parâmetros de URL (opcionais):
     ?scale=1.5      escala da interface e do desenho (ecrãs grandes)
+    ?scale=auto     escala pelo lado menor do ecrã (por omissão na instalação nova)
     ?qr=0 / ?qr=1   esconde ou mostra o QR code
     ?mode=install   equivale a abrir installation.html
     ?debug=1        mostra o painel de diagnóstico desde o início
@@ -27,7 +28,9 @@
 
   const params = new URLSearchParams(location.search);
   const MODE = window.RCFT_MODE === "install" || params.get("mode") === "install" ? "install" : "web";
-  const SCALE = clampNum(parseFloat(params.get("scale")), 0.5, 4, 1);
+  // Escala: ?scale= ou automática (data.js). A automática acompanha a altura da
+  // janela e é recalculada no resize (um iframe do Cargo começa sem tamanho).
+  let SCALE = D.scale();
   const SHOW_QR = MODE === "install" ? params.get("qr") !== "0" : params.get("qr") === "1";
 
   document.documentElement.dataset.mode = MODE;
@@ -38,12 +41,19 @@
     if (btn) { btn.href = C.CONTRIBUTE_PAGE; btn.target = "_top"; }
   }
   if (MODE === "install") document.title = "Relational Cartography (rcft) - Installation";
-  document.documentElement.style.setProperty("--s", String(SCALE));
 
   // Parâmetros visuais (iguais à versão original, multiplicados pela escala)
-  const MOVE_AMT = 1 * SCALE;
+  let MOVE_AMT = 1 * SCALE;
   const NOISE_STEP = 0.001;
-  const LABEL_OFFSET = 16 * SCALE;
+  let LABEL_OFFSET = 16 * SCALE;
+
+  function applyScale() {
+    if (D.scaleIsAuto()) SCALE = D.scale();
+    MOVE_AMT = 1 * SCALE;
+    LABEL_OFFSET = 16 * SCALE;
+    document.documentElement.style.setProperty("--s", String(SCALE));
+  }
+  applyScale();
   const GRID_SPACING = 80;
   const NEW_RING_MS = 4000;     // anel que assinala uma palavra nova
 
@@ -79,10 +89,6 @@
   let baseRadius = 8 * SCALE;
   let labelSize = 10 * SCALE;
   let coordLines = 10;
-
-  function clampNum(v, lo, hi, fallback) {
-    return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
-  }
 
   function capitalise(k) {
     return k.charAt(0).toUpperCase() + k.slice(1);
@@ -653,6 +659,7 @@
       const ow = p.width, oh = p.height;
       const wasReady = canvasReady();
       p.resizeCanvas(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
+      applyScale();
       applyResponsive();
       layoutQR();
       rollNextPos();

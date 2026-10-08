@@ -1,81 +1,60 @@
 /*
   Relational Cartography (rcft): a instalação no sistema da folha de mapa.
 
-  Os blocos são os do site (css/ui.css): leituras com cabeçalho e filete em
-  cima, blocos com moldura em baixo.
-    em cima à esquerda: últimas entradas    em cima à direita: legenda
-    em baixo à esquerda: título e totais    em baixo à direita: QR e próxima entrada
-  Para ecrãs grandes, cada bloco é ampliado inteiro (zoom) pelo fator ?scale=,
-  incluindo a distância às bordas; a moldura (js/ui.js) usa o mesmo fator.
+  Dois blocos nos cantos de baixo, com o mesmo registo do site (css/ui.css):
+    à esquerda: a cartouche (título, totais e legenda)
+    à direita:  últimas entradas, próxima entrada e QR
+  Cada bloco é ampliado inteiro (zoom) pela escala (js/data.js), incluindo a
+  distância às bordas; a moldura (js/ui.js) usa a mesma escala.
 */
 
 .i-block { zoom: var(--s); }
 
 html[data-mode="install"] #sheet text { font-size: calc(8px * var(--s)); }
 
-/* ---------- em cima: leituras ---------- */
+/* ---------- bloco da direita ---------- */
 
-html[data-mode="install"] .readout {
-  left: calc(var(--m) + var(--in));
-  right: auto;
-  top: calc(var(--m) + var(--in));
-  bottom: auto;
-}
-
-.i-legend {
+.i-panel {
   position: fixed;
   z-index: 2;
   right: calc(var(--m) + var(--in));
-  top: calc(var(--m) + var(--in));
+  bottom: calc(var(--m) + var(--in) + var(--panel-lift, 0px));
+  width: 344px;
+  border: 1px solid var(--line);
   font-size: var(--t-s);
   line-height: 1.8;
+  font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
 
-/* Uma coluna, com o ritmo das linhas da tabela. */
-.i-legend .c-legend { grid-template-columns: auto; gap: 0; padding-right: 4px; }
+.i-panel > * + * { border-top: 1px solid var(--line); }
 
-/* ---------- em baixo: blocos ---------- */
+.i-sec { padding: 8px 12px 6px; }
+
+/* Sem QR (?qr=0) não há próxima entrada anunciada. */
+.i-panel:has(#qr[hidden]) .q-next { display: none; }
+
+/* O lugar da palavra que ainda não chegou: um campo por preencher. */
+.q-blank::before { content: "__________"; letter-spacing: -0.02em; }
 
 html[data-ui="sheet"] #qr.i-qr {
   --qr-size: 96px;
-  position: fixed;
-  z-index: 2;
-  right: calc(var(--m) + var(--in));
-  bottom: calc(var(--m) + var(--in) + var(--qr-lift, 0px));
+  display: flex;
   flex-direction: row;
   align-items: stretch;
   gap: 0;
   padding: 0;
-  border: 1px solid var(--line);
-  font-size: var(--t-s);
-  pointer-events: none;
-}
-
-.q-text {
-  width: 236px;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--line);
 }
 
 .q-cta {
+  flex: 1;
   margin: 0;
   padding: 10px 12px;
-  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  line-height: 1.5;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-
-.q-next {
-  margin-top: auto;
-  padding: 0 12px 8px;
-  line-height: 1.8;
-  font-variant-numeric: tabular-nums;
-}
-
-/* O lugar da palavra que ainda não chegou: um campo por preencher. */
-.q-blank::before { content: "__________"; letter-spacing: -0.02em; }
 
 #qr.i-qr #qr-code {
   box-sizing: content-box;
@@ -89,10 +68,20 @@ html[data-ui="sheet"] #qr.i-qr {
 #coords[data-mark-new] .r-row.is-new { background: #fff; color: var(--blue); transition: none; }
 
 /* ---------- ecrãs estreitos ---------- */
-/* A instalação é para um ecrã grande; num telemóvel fica o mapa, a tabela e o título. */
+/* A instalação é para um ecrã grande. Num telemóvel: a cartouche em baixo e as
+   últimas entradas em cima, sem QR. */
 
 @media (max-width: 767px) {
-  html[data-mode="install"] .readout { top: calc(var(--m) + var(--in)); }
-  .i-legend,
+  .i-panel {
+    top: calc(var(--m) + var(--in));
+    bottom: auto;
+    width: 170px;
+    border: 0;
+    font-size: 8px;
+    line-height: 1.7;
+  }
+  .i-sec { padding: 0; }
+  .i-panel .q-next,
   html[data-ui="sheet"] #qr.i-qr { display: none !important; }
+  .i-panel .r-row { grid-template-columns: 1fr 38px 38px; }
 }
