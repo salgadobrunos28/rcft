@@ -10,7 +10,8 @@
     em salgadobrunos.com), num iframe 16:9. Carrega o próprio site (index.html)
     como num ecrã de 1280x720 e reduz tudo à largura disponível: é o site
     inteiro e ao vivo, em ponto pequeno, e continua a responder a cliques
-    (palavras, texto, botão). ?w=1440 muda a largura de referência.
+    (palavras, texto, botão). O texto da cartouche começa fechado e abre ao
+    clicar no título. ?w=1440 muda a largura de referência.
     Fora do ecrã, o site deixa de desenhar (js/sketch.js).
   -->
   <style>
@@ -19,7 +20,7 @@
   </style>
 </head>
 <body>
-  <iframe id="site" src="index.html" title="Relational Cartography"></iframe>
+  <iframe id="site" src="index.html?text=closed" title="Relational Cartography"></iframe>
   <script>
     (function () {
       var f = document.getElementById("site");

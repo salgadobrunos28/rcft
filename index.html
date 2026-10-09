@@ -16,9 +16,9 @@
     }
   </script>
   <link rel="stylesheet" href="vendor/fonts/fragment-mono.css">
-  <link rel="stylesheet" href="css/rcft.css?v=37">
-  <link rel="stylesheet" href="css/ui.css?v=37">
-  <link rel="stylesheet" href="css/inspect.css?v=37">
+  <link rel="stylesheet" href="css/rcft.css?v=38">
+  <link rel="stylesheet" href="css/ui.css?v=38">
+  <link rel="stylesheet" href="css/inspect.css?v=38">
 </head>
 <!--
   Site: o mapa generativo dentro de uma folha de mapa (moldura graduada,
@@ -43,8 +43,12 @@
       </div>
     </details>
     <script>
-      // Texto aberto no computador, fechado no telemóvel.
-      if (window.matchMedia("(min-width: 768px)").matches) document.querySelector(".c-box").open = true;
+      // Texto aberto no computador, fechado no telemóvel e na pré-visualização
+      // encaixada noutra página (embed.html carrega ?text=closed).
+      if (window.matchMedia("(min-width: 768px)").matches &&
+          new URLSearchParams(location.search).get("text") !== "closed") {
+        document.querySelector(".c-box").open = true;
+      }
     </script>
 
     <ul class="c-stats" aria-label="Corpus">
@@ -78,12 +82,12 @@
   <div id="qr" hidden><div id="qr-frame"><div id="qr-code"></div></div><div id="qr-label"><span></span><span id="qr-coords"></span></div></div>
   <pre id="debug" hidden></pre>
 
-  <script>window.RCFT_VERSION = 37;</script>
-  <script src="js/config.js?v=37"></script>
-  <script src="js/data.js?v=37"></script>
+  <script>window.RCFT_VERSION = 38;</script>
+  <script src="js/config.js?v=38"></script>
+  <script src="js/data.js?v=38"></script>
   <script src="vendor/p5-1.9.0.min.js"></script>
   <script src="vendor/qrcode-generator-1.4.4.js"></script>
-  <script src="js/ui.js?v=37"></script>
-  <script src="js/sketch.js?v=37"></script>
+  <script src="js/ui.js?v=38"></script>
+  <script src="js/sketch.js?v=38"></script>
 </body>
 </html>
