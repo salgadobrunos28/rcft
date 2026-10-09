@@ -114,9 +114,6 @@
         this.phase = p.random(p.TWO_PI);
         this.bornAt = null;
         this.lw = 0;
-        // Sentido da deriva em cada eixo: inverte quando a palavra toca a moldura.
-        this.sx = 1;
-        this.sy = 1;
       }
 
       measure() {
@@ -132,9 +129,10 @@
       // dt: fotogramas de 60 Hz decorridos. A deriva tem a mesma velocidade num
       // computador a 60 fps e num aparelho mais lento (Raspberry Pi).
       update(dt) {
-        this.x += this.sx * p.map(p.noise(this.xoff), 0, 1, -MOVE_AMT, MOVE_AMT) * dt;
-        this.y += this.sy * p.map(p.noise(this.yoff), 0, 1, -MOVE_AMT, MOVE_AMT) * dt;
-        keepInside(this, true);
+        const [px, py] = edgePush(this);
+        this.x += (p.map(p.noise(this.xoff), 0, 1, -MOVE_AMT, MOVE_AMT) + px) * dt;
+        this.y += (p.map(p.noise(this.yoff), 0, 1, -MOVE_AMT, MOVE_AMT) + py) * dt;
+        keepInside(this);
         this.xoff += NOISE_STEP * dt;
         this.yoff += NOISE_STEP * dt;
         if (this.f > 1) this.phase += 0.03 * this.f * dt;
@@ -192,18 +190,31 @@
       return b;
     }
 
-    /*
-      Os nós atravessam livremente as zonas de texto, como na versão original.
-      Ao tocar na moldura, a deriva inverte nesse eixo e a palavra volta para
-      dentro; antes ficava presa à borda enquanto o ruído a empurrasse para fora
-      e as palavras acumulavam-se nos cantos.
-    */
-    function keepInside(n, bounce) {
+    // Os nós atravessam livremente as zonas de texto, como na versão original.
+    function keepInside(n) {
       const b = bounds(n);
-      if (n.x < b.minX) { n.x = b.minX; if (bounce) n.sx = -n.sx; }
-      else if (n.x > b.maxX) { n.x = b.maxX; if (bounce) n.sx = -n.sx; }
-      if (n.y < b.minY) { n.y = b.minY; if (bounce) n.sy = -n.sy; }
-      else if (n.y > b.maxY) { n.y = b.maxY; if (bounce) n.sy = -n.sy; }
+      n.x = p.constrain(n.x, b.minX, b.maxX);
+      n.y = p.constrain(n.y, b.minY, b.maxY);
+    }
+
+    /*
+      Margem suave junto à moldura: dentro de EDGE_BAND px da borda, a palavra
+      recebe um empurrão para dentro que cresce com a proximidade (até
+      EDGE_PUSH vezes o passo da deriva). Abranda e curva de volta, sem ressalto;
+      se o ruído for forte pode tocar na moldura, mas não fica lá presa. Sem
+      isto, as palavras ficavam encostadas às bordas enquanto o ruído as
+      empurrasse para fora e acumulavam-se nos cantos.
+    */
+    const EDGE_BAND = 70;
+    const EDGE_PUSH = 0.6;
+
+    function edgePush(n) {
+      const b = bounds(n), band = EDGE_BAND * SCALE, k = EDGE_PUSH * MOVE_AMT;
+      const f = d => (d >= band ? 0 : Math.pow(1 - Math.max(0, d) / band, 2));
+      return [
+        k * (f(n.x - b.minX) - f(b.maxX - n.x)),
+        k * (f(n.y - b.minY) - f(b.maxY - n.y))
+      ];
     }
 
     // Dentro do Cargo o iframe pode começar com tamanho zero. Enquanto o canvas
