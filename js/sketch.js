@@ -114,9 +114,6 @@
         this.phase = p.random(p.TWO_PI);
         this.bornAt = null;
         this.lw = 0;
-        // Sentido da deriva em cada eixo: inverte quando a palavra toca a moldura.
-        this.sx = 1;
-        this.sy = 1;
       }
 
       measure() {
@@ -132,9 +129,9 @@
       // dt: fotogramas de 60 Hz decorridos. A deriva tem a mesma velocidade num
       // computador a 60 fps e num aparelho mais lento (Raspberry Pi).
       update(dt) {
-        this.x += this.sx * p.map(p.noise(this.xoff), 0, 1, -MOVE_AMT, MOVE_AMT) * dt;
-        this.y += this.sy * p.map(p.noise(this.yoff), 0, 1, -MOVE_AMT, MOVE_AMT) * dt;
-        keepInside(this, true);
+        this.x += p.map(p.noise(this.xoff), 0, 1, -MOVE_AMT, MOVE_AMT) * dt;
+        this.y += p.map(p.noise(this.yoff), 0, 1, -MOVE_AMT, MOVE_AMT) * dt;
+        keepInside(this);
         this.xoff += NOISE_STEP * dt;
         this.yoff += NOISE_STEP * dt;
         if (this.f > 1) this.phase += 0.03 * this.f * dt;
@@ -194,16 +191,14 @@
 
     /*
       Os nós atravessam livremente as zonas de texto, como na versão original.
-      Ao tocar na moldura, a deriva inverte nesse eixo e a palavra volta para
-      dentro; antes ficava presa à borda enquanto o ruído a empurrasse para fora
-      e as palavras acumulavam-se nos cantos.
+      Na moldura ficam encostados enquanto a deriva os empurrar para fora e só
+      saem quando ela muda de sentido: com o tempo, as palavras juntam-se ao
+      longo da moldura e nos cantos, pressionadas contra o limite do mapa.
     */
-    function keepInside(n, bounce) {
+    function keepInside(n) {
       const b = bounds(n);
-      if (n.x < b.minX) { n.x = b.minX; if (bounce) n.sx = -n.sx; }
-      else if (n.x > b.maxX) { n.x = b.maxX; if (bounce) n.sx = -n.sx; }
-      if (n.y < b.minY) { n.y = b.minY; if (bounce) n.sy = -n.sy; }
-      else if (n.y > b.maxY) { n.y = b.maxY; if (bounce) n.sy = -n.sy; }
+      n.x = p.constrain(n.x, b.minX, b.maxX);
+      n.y = p.constrain(n.y, b.minY, b.maxY);
     }
 
     // Dentro do Cargo o iframe pode começar com tamanho zero. Enquanto o canvas
