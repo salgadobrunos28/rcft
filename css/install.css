@@ -88,3 +88,7 @@ html[data-ui="sheet"] #qr.i-qr {
   html[data-ui="sheet"] #qr.i-qr { display: none !important; }
   .i-panel .r-row { grid-template-columns: 1fr 38px 38px; }
 }
+
+/* ---------- ficha de uma palavra (inspeção automática) ---------- */
+/* A ficha (css/inspect.css) é ampliada como os outros blocos (classe i-block). */
+html[data-mode="install"] #sheet .leader { stroke-width: calc(1px * var(--s)); }

@@ -79,6 +79,8 @@
 
   // Clicar numa palavra (só no site, e só com data-inspect na página).
   const INSPECT = MODE === "web" && document.documentElement.hasAttribute("data-inspect");
+  // Na instalação (sem rato), com data-inspect="auto", o próprio sistema inspeciona.
+  const AUTO = MODE === "install" && document.documentElement.dataset.inspect === "auto";
   let selected = null;
   let selEdges = null;   // { mineSame, mineDiff, restSame, restDiff }
   let paused = false;
@@ -271,6 +273,7 @@
       const next = [];
       let added = 0;
       let usedNext = false;
+      let firstNew = null;
       for (const a of agg.values()) {
         let n = existing.get(a.key);
         if (!n) {
@@ -285,7 +288,7 @@
           } else {
             placeRandom(n);
           }
-          if (firstLoadDone) { n.bornAt = p.millis(); added++; }
+          if (firstLoadDone) { n.bornAt = p.millis(); added++; if (!firstNew) firstNew = n; }
         }
         n.f = a.f;
         n.country = a.country;
@@ -303,6 +306,7 @@
       }
       if (usedNext) rollNextPos();
       if (added > 0 && FLASH) triggerFlash();
+      if (firstNew) autoInspectNew(firstNew);
       buildEdges();
       rowsCount = rows.length;
       lastSource = source;
@@ -793,6 +797,57 @@
       window.addEventListener("rcft:deselect", () => select(null));
     }
 
+    // ---------- Inspeção automática (instalação) ----------
+
+    /*
+      Na instalação não há rato: com data-inspect="auto" o sistema escolhe uma
+      palavra de AUTO_EVERY em AUTO_EVERY segundos e mostra-a durante AUTO_HOLD
+      segundos, como um clique no site (palavra parada, ligações destacadas,
+      ficha ao lado). Percorre as entradas da mais antiga para a mais recente,
+      como quem lê o arquivo. Uma palavra nova é inspecionada logo que chega,
+      durante AUTO_NEW_HOLD segundos. ?every= e ?hold= (segundos) mudam os tempos.
+    */
+    const AUTO_EVERY = (parseFloat(params.get("every")) || 40) * 1000;
+    const AUTO_HOLD = (parseFloat(params.get("hold")) || 8) * 1000;
+    const AUTO_NEW_HOLD = 12000;
+    let autoNext = AUTO_EVERY;   // em p.millis()
+    let autoUntil = 0;
+    let autoIdx = 0;
+
+    function autoInspect(now) {
+      if (!AUTO || !nodes.length) return;
+      if (selected && now >= autoUntil) {
+        select(null);
+        autoNext = now + AUTO_EVERY;
+      }
+      if (!selected && now >= autoNext) {
+        const list = nodes.slice().sort((a, b) => (a.first || 0) - (b.first || 0));
+        // Salta as palavras que estão por baixo dos blocos de texto (mal se veem).
+        let pick = null;
+        for (let k = 0; k < list.length && !pick; k++) {
+          const n = list[(autoIdx + k) % list.length];
+          if (!underBlock(n)) { pick = n; autoIdx += k; }
+        }
+        select(pick || list[autoIdx % list.length]);
+        autoIdx++;
+        autoUntil = now + AUTO_HOLD;
+      }
+    }
+
+    function underBlock(n) {
+      const pad = 24 * SCALE;
+      return [...document.querySelectorAll(".cartouche, .i-panel")].some(e => {
+        const r = e.getBoundingClientRect();
+        return n.x > r.left - pad && n.x < r.right + pad && n.y > r.top - pad && n.y < r.bottom + pad;
+      });
+    }
+
+    function autoInspectNew(n) {
+      if (!AUTO) return;
+      select(n);
+      autoUntil = p.millis() + AUTO_NEW_HOLD;
+    }
+
     // ---------- Ciclo p5 ----------
 
     p.setup = () => {
@@ -877,6 +932,7 @@
       if (C.EDGES === "network") drawEdges();
       else drawPath();
       probeEdges(p.deltaTime);
+      autoInspect(now);
       const dt = Math.min(4, Math.max(0, p.deltaTime / (1000 / 60)));
       for (const n of nodes) {
         if (!paused && n !== selected) n.update(dt);

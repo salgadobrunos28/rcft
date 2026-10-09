@@ -138,23 +138,29 @@
 
   function placeCard(d) {
     const W = window.innerWidth, H = window.innerHeight;
-    const cw = card.offsetWidth, ch = card.offsetHeight;
+    // Na instalação a ficha é ampliada com zoom (classe i-block): as medidas
+    // vêm do retângulo visível e as posições dividem-se pelo zoom.
+    const z = parseFloat(getComputedStyle(card).zoom) || 1;
+    const cr = card.getBoundingClientRect();
+    const cw = cr.width, ch = cr.height;
     let ax, ay;   // canto da ficha onde chega a linha
     if (W < 768) {
       card.style.left = card.style.top = "";
       const r = card.getBoundingClientRect();
       ax = r.left; ay = r.bottom;
     } else {
-      const lo = cssPx("--m") + cssPx("--in");
-      const gap = 40;
-      const avoid = [".cartouche", ".readout"].map(s => document.querySelector(s))
-        .filter(Boolean).map(e => e.getBoundingClientRect());
+      const lo = (cssPx("--m") + cssPx("--in")) * S;
+      const gap = 40 * S;
+      const avoid = [...document.querySelectorAll(".cartouche, .readout, .i-panel")]
+        .map(e => e.getBoundingClientRect());
       const top = d.labelTop - gap - ch, below = d.y + d.r + gap;
       const cands = [
         { x: d.x + gap, y: top, cx: 0, cy: 1 },
         { x: d.x - gap - cw, y: top, cx: 1, cy: 1 },
         { x: d.x + gap, y: below, cx: 0, cy: 0 },
-        { x: d.x - gap - cw, y: below, cx: 1, cy: 0 }
+        { x: d.x - gap - cw, y: below, cx: 1, cy: 0 },
+        { x: d.x - cw / 2, y: top, cx: 0.5, cy: 1 },
+        { x: d.x - cw / 2, y: below, cx: 0.5, cy: 0 }
       ];
       let best = null;
       for (const c of cands) {
@@ -166,14 +172,14 @@
       }
       best.x = Math.min(Math.max(best.x, lo), W - lo - cw);
       best.y = Math.min(Math.max(best.y, lo), H - lo - ch);
-      card.style.left = best.x + "px";
-      card.style.top = best.y + "px";
+      card.style.left = best.x / z + "px";
+      card.style.top = best.y / z + "px";
       ax = best.x + best.cx * cw;
       ay = best.y + best.cy * ch;
     }
     // Linha da palavra até ao canto da ficha, a começar fora do círculo.
     const dx = ax - d.x, dy = ay - d.y, len = Math.hypot(dx, dy) || 1;
-    const off = d.r + 11;
+    const off = d.r + 11 * S;
     clearLeader();
     el("line", { class: "leader", x1: d.x + dx / len * off, y1: d.y + dy / len * off, x2: ax, y2: ay });
   }
