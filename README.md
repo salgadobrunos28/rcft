@@ -16,6 +16,7 @@ lab.html            formal variations (not public)
 css/rcft.css        base styles and installation layout
 css/ui.css          website interface (map sheet) and form
 css/install.css     installation layout on top of ui.css
+css/inspect.css     card of a word on the website (click a word)
 js/ui.js            graduated frame, live totals and table rows (website and installation)
 js/config.js        endpoints and timings (the file you normally edit)
 js/data.js          reading, normalising and caching responses
@@ -53,6 +54,7 @@ The scale follows the screen on its own: on a 32" TV the text has the same physi
 - Every word is linked to every other by a straight line: solid when both answers come from the same country, dashed when not (`EDGES: "network"` in `js/config.js`). `EDGES: "path"` switches to one continuous curved line through the words in order of arrival (Catmull-Rom converted to cubic Bezier, `PATH_TENSION`); it was tested and set aside.
 - Lines are drawn as short segments, as in the original sketch (dashes of 8 and gaps of 5), one stroke per segment. With graphics acceleration (Chrome on a Mac) this is the fast way; grouping the segments into long paths dropped the drawing to about 4 fps there. Without acceleration (software rendering, possibly a Raspberry Pi) grouping them in batches of 1000 per stroke is 2 to 4 times faster. If the device stays below 30 fps, the sketch measures both ways for a few seconds and keeps the faster one, and measures again when the number of words grows by a quarter; the diagnostics panel shows the choice (`drawing`). `?edges=segments` or `?edges=batched` fixes one of them. The native dash (`setLineDash`) is not used.
 - Words drift up to the frame and bounce off it; the frame's graduation marks the 80 px grid from the centre, so the centre mark belongs to the series and the numbers are the same pixel coordinates as the tables.
+- On the website, clicking a word opens its card: entry order, date added (no time of day), origin as written in the form, and how many times it was written, with each entry's date and country. The word holds still with a ring, its links are drawn on top and the rest dims; the card sits beside it with a leader line (in place of the latest entries on phones). It closes with another click, a click elsewhere, the cross or Esc. The long answers are never shown.
 - The form sends all six fields with `keepalive` and waits only 1.5 seconds: if the request fails in that window (no network, for instance) the fields stay filled so the participant can try again; otherwise it thanks them and returns to the map, where the word appears at once from a local copy until the sheet confirms it.
 
 ## Raspberry Pi
