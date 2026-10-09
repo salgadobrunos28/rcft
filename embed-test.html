@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teste: rcft na página do projeto</title>
+  <meta name="robots" content="noindex">
+  <!--
+    Página de teste: imita a página do projeto em salgadobrunos.com (coluna de
+    896 px num ecrã de 2048, medidas tiradas da página real) para ver o mapa
+    encaixado entre as fotografias. ?ratio=4x5 (vertical, como a primeira
+    fotografia) ou ?ratio=4x3 (horizontal, como a galeria).
+  -->
+  <style>
+    :root { --col-x: 35.55vw; --col-w: 43.75vw; --meta-x: 20.7vw; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #fff; color: #000; }
+    body {
+      font: 500 13.6px/16.3px "Helvetica Neue", Helvetica, Inter, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .meta { position: absolute; left: var(--meta-x); top: 121px; width: 214px; }
+    .meta b { display: block; font-weight: 800; margin-bottom: 15px; }
+    .col { margin-left: var(--col-x); width: var(--col-w); padding: 142px 0 120px; }
+    .col p { margin: 0 0 23px; }
+    .col img, .col iframe { display: block; width: 100%; border: 0; margin: 0 0 18px; }
+    .col iframe { aspect-ratio: var(--ratio, 4 / 5); background: rgb(0, 24, 255); }
+    .switch { position: fixed; right: 24px; top: 16px; font-size: 12px; }
+    .switch a { color: #000; margin-left: 10px; }
+    .switch a[aria-current] { font-weight: 800; text-decoration: none; }
+    @media (max-width: 767px) {
+      .meta { position: static; width: auto; padding: 60px 16px 0; }
+      .col { margin: 0; width: auto; padding: 20px 16px 80px; }
+    }
+  </style>
+  <script>
+    var r = new URLSearchParams(location.search).get("ratio") === "4x3" ? "4x3" : "4x5";
+    document.documentElement.style.setProperty("--ratio", r === "4x3" ? "4 / 3" : "4 / 5");
+  </script>
+</head>
+<body>
+  <nav class="switch">teste:
+    <a href="?ratio=4x5" id="r45">vertical 4:5</a>
+    <a href="?ratio=4x3" id="r43">horizontal 4:3</a>
+  </nav>
+
+  <div class="meta">
+    <b>relational cartography (rcft)</b>
+    Installation<br>2026<br>Custom Code in p5.js | Screen | Steel
+  </div>
+
+  <main class="col">
+    <p>Relational Cartography is a generative system that traces the shifting relations between words, people and territories. The work invites each visitor to define in a single word what a border is. Every answer becomes a node in a drifting field, where meanings move closer and apart without settling into a definition. The piece adopts the visual grammar of data and surveillance systems but refuses their function, it accumulates language without turning it into actionable knowledge.</p>
+
+    <iframe src="embed.html" title="Relational Cartography, live" loading="lazy"></iframe>
+
+    <img src="https://freight.cargo.site/w/1000/q/75/i/J2820434042932983853692568781235/P1020337-Editar.jpg" alt="">
+    <img src="https://freight.cargo.site/w/1000/q/75/i/K2766095390276587641273499042227/rcft.jpg" alt="">
+  </main>
+
+  <script>
+    document.getElementById(r === "4x3" ? "r43" : "r45").setAttribute("aria-current", "true");
+  </script>
+</body>
+</html>

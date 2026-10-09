@@ -80,11 +80,11 @@
 
   window.addEventListener("rcft:data", e => {
     const d = e.detail;
-    if (!$("st-responses")) return;
-    $("st-responses").textContent = d.responses;
-    $("st-words").textContent = d.words;
-    $("st-origins").textContent = d.origins;
-    $("st-last").textContent = d.lastTs ? stamp(d.lastTs) : "--";
+    const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+    set("st-responses", d.responses);
+    set("st-words", d.words);
+    set("st-origins", d.origins);
+    set("st-last", d.lastTs ? stamp(d.lastTs) : "--");
     stackBottom();
   });
 

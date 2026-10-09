@@ -799,6 +799,13 @@
       const c = p.createCanvas(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
       c.parent("stage");
       setupInspect(c.elt);
+      // Encaixado noutra página (embed.html): só desenha enquanto o iframe está
+      // visível no ecrã, para não pesar a página que o recebe.
+      if (document.documentElement.hasAttribute("data-embed") && "IntersectionObserver" in window) {
+        new IntersectionObserver(entries => {
+          if (entries[0].isIntersecting) p.loop(); else p.noLoop();
+        }).observe(document.documentElement);
+      }
       p.pixelDensity(Math.min(window.devicePixelRatio || 1, 2));
       p.textFont("Helvetica");
       p.textAlign(p.CENTER, p.CENTER);
