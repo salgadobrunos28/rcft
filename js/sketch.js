@@ -799,9 +799,10 @@
       const c = p.createCanvas(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
       c.parent("stage");
       setupInspect(c.elt);
-      // Encaixado noutra página (embed.html): só desenha enquanto o iframe está
-      // visível no ecrã, para não pesar a página que o recebe.
-      if (document.documentElement.hasAttribute("data-embed") && "IntersectionObserver" in window) {
+      // Dentro de um iframe (Cargo, ou a pré-visualização em embed.html na página
+      // do projeto): só desenha enquanto está visível no ecrã, para não pesar a
+      // página que o recebe. Num iframe que ocupa a janela inteira não muda nada.
+      if (window.top !== window.self && "IntersectionObserver" in window) {
         new IntersectionObserver(entries => {
           if (entries[0].isIntersecting) p.loop(); else p.noLoop();
         }).observe(document.documentElement);

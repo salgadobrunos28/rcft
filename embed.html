@@ -1,48 +1,39 @@
 <!doctype html>
-<html lang="en" data-ui="sheet" data-inspect data-embed>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Relational Cartography (rcft) - Embed</title>
+  <title>Relational Cartography (rcft) - Preview</title>
   <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="vendor/fonts/fragment-mono.css">
-  <link rel="stylesheet" href="css/rcft.css?v=37">
-  <link rel="stylesheet" href="css/ui.css?v=37">
-  <link rel="stylesheet" href="css/inspect.css?v=37">
-  <link rel="stylesheet" href="css/embed.css?v=37">
+  <!--
+    Pré-visualização do site para encaixar noutra página (a página do projeto
+    em salgadobrunos.com), num iframe 16:9. Carrega o próprio site (index.html)
+    como num ecrã de 1280x720 e reduz tudo à largura disponível: é o site
+    inteiro e ao vivo, em ponto pequeno, e continua a responder a cliques
+    (palavras, texto, botão). ?w=1440 muda a largura de referência.
+    Fora do ecrã, o site deixa de desenhar (js/sketch.js).
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: rgb(0, 24, 255); }
+    #site { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; }
+  </style>
 </head>
-<!--
-  Versão para encaixar noutra página (por exemplo a página do projeto em
-  salgadobrunos.com), dentro de um iframe: o mapa ao vivo na moldura graduada,
-  sem a cartouche (a página que o recebe já tem o título e o texto). Em baixo,
-  os totais e uma ligação para a cartografia completa. As palavras abrem a
-  ficha. O desenho para quando o iframe sai do ecrã (js/sketch.js).
--->
-<body class="map">
-  <div id="stage" aria-hidden="true"></div>
-  <svg id="sheet" aria-hidden="true"></svg>
-
-  <aside id="w-card" class="w-card" aria-live="polite" hidden>
-    <div class="r-head w-head"><span class="w-word"></span><button class="w-close" type="button" aria-label="Close"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1 1L9 9M9 1L1 9"/></svg></button></div>
-    <div class="w-body"></div>
-  </aside>
-
-  <footer class="e-foot">
-    <ul class="c-stats e-stats" aria-label="Corpus">
-      <li><span class="c-n" id="st-responses">--</span>responses</li>
-      <li><span class="c-n" id="st-words">--</span>words</li>
-      <li><span class="c-n" id="st-origins">--</span>origins</li>
-    </ul>
-    <a class="e-open" id="e-open" href="https://rcft.cargo.site/" target="_top">Open the cartography</a>
-  </footer>
-
-  <pre id="debug" hidden></pre>
-
-  <script>window.RCFT_VERSION = 37;</script>
-  <script src="js/config.js?v=37"></script>
-  <script src="js/data.js?v=37"></script>
-  <script src="vendor/p5-1.9.0.min.js"></script>
-  <script src="js/ui.js?v=37"></script>
-  <script src="js/sketch.js?v=37"></script>
+<body>
+  <iframe id="site" src="index.html" title="Relational Cartography"></iframe>
+  <script>
+    (function () {
+      var f = document.getElementById("site");
+      var W = parseInt(new URLSearchParams(location.search).get("w"), 10) || 1280;
+      var H = Math.round(W * 9 / 16);
+      f.style.width = W + "px";
+      f.style.height = H + "px";
+      function fit() {
+        var s = Math.min(innerWidth / W, innerHeight / H) || 1;
+        f.style.transform = "translate(" + (innerWidth - W * s) / 2 + "px," + (innerHeight - H * s) / 2 + "px) scale(" + s + ")";
+      }
+      fit();
+      addEventListener("resize", fit);
+    })();
+  </script>
 </body>
 </html>
