@@ -98,6 +98,123 @@
     coords.dataset.lines = w < 768 ? "5" : LINES;
   }
 
+  // ---------- ficha de uma palavra (site, com data-inspect) ----------
+
+  /*
+    O sketch emite rcft:select com os dados da palavra (ou null para fechar).
+    A ficha mostra a ordem de chegada, a data (sem hora), a origem e as
+    repetições; nunca as respostas longas nem a hora. No computador fica junto
+    da palavra, ligada a ela por uma linha de chamada, do lado onde não tapa a
+    cartouche nem a tabela; no telemóvel ocupa o lugar da tabela.
+  */
+  const card = document.getElementById("w-card");
+  const titleCase = s => s ? s.replace(/(^|[\s-])\S/g, c => c.toUpperCase()) : "--";
+  const dateOnly = ts => {
+    if (!ts) return "--";
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+  };
+
+  function row(label, value) {
+    const r = document.createElement("div");
+    r.className = "w-row";
+    const a = document.createElement("span"), b = document.createElement("span");
+    a.textContent = label;
+    b.textContent = value;
+    r.append(a, b);
+    return r;
+  }
+
+  function clearLeader() {
+    const old = svg.querySelector(".leader");
+    if (old) old.remove();
+  }
+
+  function rectsOverlap(a, b) {
+    const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+    const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    return w > 0 && h > 0 ? w * h : 0;
+  }
+
+  function placeCard(d) {
+    const W = window.innerWidth, H = window.innerHeight;
+    const cw = card.offsetWidth, ch = card.offsetHeight;
+    let ax, ay;   // canto da ficha onde chega a linha
+    if (W < 768) {
+      card.style.left = card.style.top = "";
+      const r = card.getBoundingClientRect();
+      ax = r.left; ay = r.bottom;
+    } else {
+      const lo = cssPx("--m") + cssPx("--in");
+      const gap = 40;
+      const avoid = [".cartouche", ".readout"].map(s => document.querySelector(s))
+        .filter(Boolean).map(e => e.getBoundingClientRect());
+      const top = d.labelTop - gap - ch, below = d.y + d.r + gap;
+      const cands = [
+        { x: d.x + gap, y: top, cx: 0, cy: 1 },
+        { x: d.x - gap - cw, y: top, cx: 1, cy: 1 },
+        { x: d.x + gap, y: below, cx: 0, cy: 0 },
+        { x: d.x - gap - cw, y: below, cx: 1, cy: 0 }
+      ];
+      let best = null;
+      for (const c of cands) {
+        const r = { left: c.x, top: c.y, right: c.x + cw, bottom: c.y + ch };
+        const out = Math.max(0, lo - r.left) + Math.max(0, lo - r.top) +
+          Math.max(0, r.right - (W - lo)) + Math.max(0, r.bottom - (H - lo));
+        const score = out * 1000 + avoid.reduce((s, a) => s + rectsOverlap(r, a), 0);
+        if (!best || score < best.score) best = Object.assign({ score }, c);
+      }
+      best.x = Math.min(Math.max(best.x, lo), W - lo - cw);
+      best.y = Math.min(Math.max(best.y, lo), H - lo - ch);
+      card.style.left = best.x + "px";
+      card.style.top = best.y + "px";
+      ax = best.x + best.cx * cw;
+      ay = best.y + best.cy * ch;
+    }
+    // Linha da palavra até ao canto da ficha, a começar fora do círculo.
+    const dx = ax - d.x, dy = ay - d.y, len = Math.hypot(dx, dy) || 1;
+    const off = d.r + 11;
+    clearLeader();
+    el("line", { class: "leader", x1: d.x + dx / len * off, y1: d.y + dy / len * off, x2: ax, y2: ay });
+  }
+
+  function showCard(d) {
+    if (!card) return;
+    if (!d) {
+      card.hidden = true;
+      root.classList.remove("has-card");
+      clearLeader();
+      return;
+    }
+    const entries = d.entries.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const origins = [...new Set(entries.map(e => titleCase(e.country)))];
+    card.querySelector(".w-word").textContent = d.word;
+    const body = card.querySelector(".w-body");
+    body.textContent = "";
+    body.append(
+      row("entry", d.first && d.total ? `${d.first} / ${d.total}` : "--"),
+      row("added", dateOnly(entries[0] && entries[0].ts)),
+      row("origin", origins.join(", ")),
+      row("written", entries.length === 1 ? "once" : `${entries.length} times`)
+    );
+    if (entries.length > 1) {
+      const h = document.createElement("div");
+      h.className = "r-head w-sub";
+      h.textContent = "Entries";
+      body.append(h, ...entries.map(e => row(dateOnly(e.ts), titleCase(e.country))));
+    }
+    card.hidden = false;
+    root.classList.add("has-card");
+    placeCard(d);
+  }
+
+  if (card) {
+    card.querySelector(".w-close").addEventListener("click", () => {
+      window.dispatchEvent(new Event("rcft:deselect"));
+    });
+    window.addEventListener("rcft:select", e => showCard(e.detail));
+  }
+
   /*
     Instalação: num ecrã estreito com escala grande (por exemplo um ecrã ao alto
     com ?scale=1.5) o bloco do QR e o do título não cabem lado a lado. Nesse caso

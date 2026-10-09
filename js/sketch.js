@@ -75,6 +75,12 @@
   let nodes = [];
   let sameEdges = [];
   let diffEdges = [];
+  let totalResponses = 0;
+
+  // Clicar numa palavra (só no site, e só com data-inspect na página).
+  const INSPECT = MODE === "web" && document.documentElement.hasAttribute("data-inspect");
+  let selected = null;
+  let selEdges = null;   // { mineSame, mineDiff, restSame, restDiff }
   let paused = false;
   let flashAt = -Infinity;
   let firstLoadDone = false;
@@ -137,9 +143,15 @@
       display(now) {
         if (this.highlight) { this.bornAt = now; this.highlight = false; }
         const r = this.radius();
-        p.stroke(255);
+        // Com uma palavra escolhida, as outras ficam esbatidas.
+        const a = selected && selected !== this ? 120 : 255;
+        p.stroke(255, a);
         p.noFill();
         p.ellipse(this.x, this.y, r, r);
+        if (selected === this) {
+          p.stroke(255);
+          p.ellipse(this.x, this.y, r + 22 * SCALE, r + 22 * SCALE);
+        }
 
         if (this.bornAt !== null) {
           const t = (now - this.bornAt) / NEW_RING_MS;
@@ -152,7 +164,7 @@
           }
         }
 
-        p.fill(255);
+        p.fill(255, a);
         p.noStroke();
         p.textSize(labelSize);
         p.text(this.label, this.x, this.y - LABEL_OFFSET);
@@ -248,11 +260,17 @@
         let a = agg.get(key);
         if (!a) {
           // País do primeiro respondente, como na versão original.
-          a = { key, f: 0, country: D.normCountry(r.country) };
+          a = { key, f: 0, country: D.normCountry(r.country), entries: [] };
           agg.set(key, a);
         }
         a.f++;
+        a.entries.push({ ts: r.ts || null, country: D.normCountry(r.country) });
       }
+      // Ordem de chegada da primeira vez que a palavra foi escrita (1 = a mais antiga).
+      rows.forEach((r, i) => {
+        const a = agg.get(r.word.toLowerCase());
+        if (a && a.first === undefined) a.first = i + 1;
+      });
 
       const existing = new Map(nodes.map(n => [n.key, n]));
       const next = [];
@@ -276,10 +294,18 @@
         }
         n.f = a.f;
         n.country = a.country;
+        n.entries = a.entries;
+        n.first = a.first;
         next.push(n);
       }
 
       nodes = next;
+      totalResponses = rows.length;
+      if (selected) {
+        // A ficha acompanha os dados novos (por exemplo, mais uma repetição).
+        selected = nodes.find(n => n.key === selected.key) || null;
+        announceSelection();
+      }
       if (usedNext) rollNextPos();
       if (added > 0 && FLASH) triggerFlash();
       buildEdges();
@@ -306,6 +332,7 @@
           else diffEdges.push(pair);
         }
       }
+      partitionEdges();
     }
 
     async function refresh() {
@@ -454,10 +481,27 @@
       probe.words = nodes.length;
     }
 
+    // Com uma palavra escolhida: as ligações dela por cima, a branco e mais
+    // grossas; as restantes esbatidas.
+    function partitionEdges() {
+      if (!selected) { selEdges = null; return; }
+      const has = ([a, b]) => a === selected || b === selected;
+      selEdges = {
+        mineSame: sameEdges.filter(has), mineDiff: diffEdges.filter(has),
+        restSame: sameEdges.filter(e => !has(e)), restDiff: diffEdges.filter(e => !has(e))
+      };
+    }
+
     function drawEdges() {
+      if (!selEdges) { strokeEdges(sameEdges, diffEdges, "#ffffff", 0.3); return; }
+      strokeEdges(selEdges.restSame, selEdges.restDiff, "rgba(255,255,255,0.22)", 0.3);
+      strokeEdges(selEdges.mineSame, selEdges.mineDiff, "#ffffff", 0.7);
+    }
+
+    function strokeEdges(sameList, diffList, color, width) {
       const ctx = p.drawingContext;
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 0.3 * SCALE;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width * SCALE;
       ctx.setLineDash([]);
       const batched = edgeMode === "batched";
 
@@ -476,11 +520,11 @@
             ctx.stroke();
           };
 
-      for (const [a, b] of sameEdges) add(a.x, a.y, b.x, b.y);
+      for (const [a, b] of sameList) add(a.x, a.y, b.x, b.y);
 
       const dash = 8 * SCALE;
       const step = 13 * SCALE; // traço de 8 + intervalo de 5
-      for (const [a, b] of diffEdges) {
+      for (const [a, b] of diffList) {
         const dx = b.x - a.x, dy = b.y - a.y;
         const len = Math.hypot(dx, dy);
         if (!len) continue;
@@ -700,11 +744,66 @@
     */
     const VERSION_CHECK_MS = 5 * 60 * 1000;
 
+    // ---------- Escolha de uma palavra (site) ----------
+
+    /*
+      Clicar numa palavra abre a ficha dela (js/ui.js): ordem de chegada, data,
+      origem e repetições. A palavra fica parada e marcada, as ligações dela
+      destacam-se e o resto esbate. Fecha com outro clique, fora, ou com Esc.
+      Só no site e com data-inspect na página; na instalação não há rato.
+    */
+    function nodeAt(mx, my) {
+      const tol = (isMobile ? 14 : 8) * SCALE;
+      let best = null, bestD = Infinity;
+      for (const n of nodes) {
+        const d = Math.hypot(mx - n.x, my - n.y);
+        const ly = n.y - LABEL_OFFSET;
+        const onLabel = Math.abs(mx - n.x) <= n.lw / 2 + tol / 2 &&
+          Math.abs(my - ly) <= labelSize / 2 + tol / 2;
+        if ((d <= n.radius() / 2 + tol || onLabel) && d < bestD) { best = n; bestD = d; }
+      }
+      return best;
+    }
+
+    function select(n) {
+      if (selected === n) return;
+      selected = n;
+      partitionEdges();
+      announceSelection();
+    }
+
+    function announceSelection() {
+      const n = selected;
+      window.dispatchEvent(new CustomEvent("rcft:select", {
+        detail: n ? {
+          word: n.label,
+          x: n.x, y: n.y, r: n.radius() / 2, labelTop: n.y - LABEL_OFFSET - labelSize / 2,
+          first: n.first, total: totalResponses,
+          entries: n.entries || []
+        } : null
+      }));
+    }
+
+    function setupInspect(canvasEl) {
+      if (!INSPECT) return;
+      const pos = e => [e.clientX, e.clientY];
+      canvasEl.addEventListener("click", e => {
+        const n = nodeAt(...pos(e));
+        select(n && n !== selected ? n : null);
+      });
+      canvasEl.addEventListener("pointermove", e => {
+        if (e.pointerType !== "mouse") return;
+        canvasEl.style.cursor = nodeAt(...pos(e)) ? "pointer" : "";
+      });
+      window.addEventListener("rcft:deselect", () => select(null));
+    }
+
     // ---------- Ciclo p5 ----------
 
     p.setup = () => {
       const c = p.createCanvas(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
       c.parent("stage");
+      setupInspect(c.elt);
       p.pixelDensity(Math.min(window.devicePixelRatio || 1, 2));
       p.textFont("Helvetica");
       p.textAlign(p.CENTER, p.CENTER);
@@ -712,6 +811,8 @@
       buildQR();
       layoutQR();
       if (params.get("debug") === "1" && el.debug) el.debug.hidden = false;
+      // Para testes: posições das palavras na consola (só com ?debug=1).
+      if (params.get("debug") === "1") window.RCFT_NODES = () => nodes.map(n => ({ word: n.label, x: n.x, y: n.y, f: n.f }));
       applyResponsive();
       rollNextPos();
 
@@ -739,6 +840,7 @@
     };
 
     p.windowResized = () => {
+      if (selected) select(null);
       const ow = p.width, oh = p.height;
       const wasReady = canvasReady();
       p.resizeCanvas(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
@@ -774,7 +876,7 @@
       probeEdges(p.deltaTime);
       const dt = Math.min(4, Math.max(0, p.deltaTime / (1000 / 60)));
       for (const n of nodes) {
-        if (!paused) n.update(dt);
+        if (!paused && n !== selected) n.update(dt);
         n.display(now);
       }
       drawFlash(now);
@@ -786,6 +888,7 @@
       const a = document.activeElement;
       if (a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable)) return;
       const k = String(p.key).toLowerCase();
+      if (p.key === "Escape") { select(null); return; }
       if (p.key === " ") paused = !paused;
       else if (k === "r") refresh();
       else if (k === "d" && el.debug) { el.debug.hidden = !el.debug.hidden; updateDebug(); }
