@@ -59,16 +59,21 @@ The scale follows the screen on its own: on a 32" TV the text has the same physi
 
 ## Raspberry Pi
 
-The installation runs in Chromium on Raspberry Pi OS with no changes. Points to keep in mind:
+Tested setup: Raspberry Pi 4 Model B or Pi 5, Raspberry Pi OS (64-bit) with desktop, Chromium in kiosk mode.
 
-- Every word is linked to every other, so the number of lines grows with the square of the number of words (37 words: 666 lines; 80 words: 3160; 150 words: 11175). Measured in headless Chromium (software rendering, no GPU), with the batched drawing, 1920x1080: about 60 fps with 38 words, 18 with 80, 6 with 150; at 1280x720: 60, 30 and 8. On a Pi the numbers will be lower; the sketch picks the faster drawing on the device itself. The drift speed does not depend on the frame rate, so a slower device moves at the same pace, only less smoothly.
-- A Raspberry Pi 5 is the safer choice. On a Pi 4, or once the corpus grows, set the output to 1280x720: the scale adjusts on its own (text keeps the same size on the TV) and the drawing is noticeably lighter.
-- Open the GitHub Pages address directly, not the Cargo page, which adds its own scripts and an iframe: `https://salgadobrunos28.github.io/rcft/installation.html`
-- Kiosk mode, started with the desktop (for example in `~/.config/labwc/autostart` on recent versions; the command is `chromium` or `chromium-browser` depending on the version):
-  `chromium --kiosk --noerrdialogs --disable-infobars https://salgadobrunos28.github.io/rcft/installation.html`
-- Turn off screen blanking (raspi-config, Display Options) and the TV's overscan.
-- To check the frame rate on the Pi, add `?debug=1` to the address or press `d`.
-- Without network the screen keeps showing the last corpus it received; new words appear when the connection returns.
+1. Raspberry Pi Imager: Raspberry Pi OS (64-bit). In the customisation, set the hostname (`rcft`), user and password, the venue's Wi-Fi, the time zone, and enable SSH.
+2. Connect the TV to the micro-HDMI port next to the USB-C power input, plug a keyboard and mouse, then the power.
+3. In the Pi's terminal, as the normal user:
+   `curl -fsSL https://salgadobrunos28.github.io/rcft/tools/pi-setup.sh | bash`
+   It updates the system, installs Chromium, boots straight to the desktop, turns off screen blanking, creates `~/rcft-kiosk.sh` (waits for the network, opens `installation.html` full screen, skips the "restore pages" prompt) and starts it with the desktop, and reboots the Pi every day at 06:00 (`RCFT_REBOOT_AT=` before `bash` changes or disables it).
+4. `sudo reboot`. The installation opens by itself.
+
+Notes:
+- Every word is linked to every other, so the number of lines grows with the square of the number of words (37 words: 666 lines; 80 words: 3160). Press `d` on the Pi's keyboard to see the frame rate and the drawing mode; `d` again hides it. Below about 20 fps, set the output to 1280x720 (Screen Configuration): the scale adjusts on its own and the text keeps the same size on the TV. The drift speed does not depend on the frame rate.
+- Alt+F4 closes the browser; `~/rcft-kiosk.sh` opens it again. To turn the installation mode off: `touch ~/.rcft-off` and reboot (`rm ~/.rcft-off` turns it back on). Over SSH: `ssh user@rcft.local`.
+- Without network the screen keeps the last corpus it received. Guest networks with a login page do not work; use a network without a login page or a phone hotspot.
+- Turn off the TV's overscan ("Just Scan", "Screen Fit" or similar) and its automatic standby.
+- Changes to the piece reach the Pi by themselves (version check every five minutes).
 
 ## Updating
 
