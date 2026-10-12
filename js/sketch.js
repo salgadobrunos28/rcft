@@ -656,6 +656,29 @@
       }
     }
 
+    // Fotogramas por segundo contados em janelas de 1 s (o valor de p.frameRate()
+    // é instantâneo e salta muito). No painel: média dos últimos 2 s e o valor
+    // mais baixo dos últimos 10 s.
+    let fpsFrames = 0, fpsT0 = 0;
+    const fpsHist = [];
+    function countFrame() {
+      const t = performance.now();
+      if (!fpsT0) fpsT0 = t;
+      fpsFrames++;
+      if (t - fpsT0 >= 1000) {
+        fpsHist.push(fpsFrames * 1000 / (t - fpsT0));
+        if (fpsHist.length > 10) fpsHist.shift();
+        fpsFrames = 0;
+        fpsT0 = t;
+      }
+    }
+    function fpsLine() {
+      if (!fpsHist.length) return "...";
+      const last = fpsHist.slice(-2);
+      const avg = last.reduce((a, b) => a + b, 0) / last.length;
+      return `${Math.round(avg)}  (2 s average; lowest in 10 s: ${Math.round(Math.min(...fpsHist))})`;
+    }
+
     function updateDebug() {
       if (!el.debug || el.debug.hidden) return;
       const t = lastSync ? lastSync.toLocaleTimeString() : "-";
@@ -670,7 +693,7 @@
         `drawing    ${edgeMode}${probe ? "  " + Object.entries(probe.fps).map(([k, v]) => k + " " + v + " fps").join(" / ") + (probe.done ? "" : " (measuring)") : " (fixed)"}`,
         `last sync  ${t}`,
         `error      ${lastError || "-"}`,
-        `fps        ${Math.round(p.frameRate())}`,
+        `fps        ${fpsLine()}`,
         `version    ${window.RCFT_VERSION || "-"}`
       ].join("\n");
     }
@@ -932,6 +955,7 @@
       if (C.EDGES === "network") drawEdges();
       else drawPath();
       probeEdges(p.deltaTime);
+      countFrame();
       autoInspect(now);
       const dt = Math.min(4, Math.max(0, p.deltaTime / (1000 / 60)));
       for (const n of nodes) {
