@@ -69,7 +69,9 @@ Tested setup: Raspberry Pi 4 Model B or Pi 5, Raspberry Pi OS (64-bit) with desk
 4. `sudo reboot`. The installation opens by itself.
 
 Notes:
-- Every word is linked to every other, so the number of lines grows with the square of the number of words (37 words: 666 lines; 80 words: 3160). Press `d` on the Pi's keyboard to see the frame rate and the drawing mode; `d` again hides it. Below about 20 fps, set the output to 1280x720 (Screen Configuration): the scale adjusts on its own and the text keeps the same size on the TV. The drift speed does not depend on the frame rate.
+- Every word is linked to every other, so the number of lines grows with the square of the number of words (37 words: 666 lines; 80 words: 3160). On a Pi 4 the sketch picks the WebGL drawing (`gl`) by itself. Set the output to 1280x720 (Control Centre, Screens, or Screen Configuration): measured on a Pi 4 with 37 words, 15 fps at 1920x1080 and 35 fps at 1280x720, because the 2D canvas that holds the grid and the words is redrawn over the whole screen every frame. The scale adjusts on its own and the text keeps the same size on the TV. The drift speed does not depend on the frame rate.
+- Press `d` on the Pi's keyboard to see the diagnostics panel (frame rate, drawing mode, screen size, graphics chip); `d` again hides it. Without a keyboard, add `?debug=1` to the address in `~/rcft-kiosk.sh` and reboot.
+- Without a keyboard, `sudo raspi-config nonint do_squeekboard S1` turns on the on-screen keyboard (top bar), useful in the two minutes after boot when the Pi waits for the network before opening the piece. To join a Wi-Fi network from Raspberry Pi Connect's remote shell: `sudo nmcli --ask dev wifi connect "NETWORK"`.
 - Alt+F4 closes the browser; `~/rcft-kiosk.sh` opens it again. To turn the installation mode off: `touch ~/.rcft-off` and reboot (`rm ~/.rcft-off` turns it back on). Over SSH: `ssh user@rcft.local`.
 - Without network the screen keeps the last corpus it received. Guest networks with a login page do not work; use a network without a login page or a phone hotspot.
 - Turn off the TV's overscan ("Just Scan", "Screen Fit" or similar) and its automatic standby.

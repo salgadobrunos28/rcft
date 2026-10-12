@@ -469,8 +469,9 @@
       if (!probe || C.EDGES !== "network" || nodes.length < 2) return;
       if (probe.done) {
         if (nodes.length < probe.words * 1.25) return;
+        // Volta a medir a partir da forma escolhida: se ainda passar, o ecrã
+        // não chega a abrandar (no Pi, "segments" fica abaixo dos 10 fps).
         Object.assign(probe, { ms: 0, mt: 0, frames: 0, fps: {}, done: false });
-        edgeMode = "segments";
       }
       if (document.hidden || paused || dtMs > 1000) { probe.ms = probe.mt = probe.frames = 0; return; }
       probe.ms += dtMs;
