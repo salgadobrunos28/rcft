@@ -227,7 +227,7 @@
     }
 
     function applyResponsive() {
-      isMobile = window.innerWidth < 768;
+      isMobile = D.narrow();
       // Com a interface de folha de mapa, as palavras vão até à moldura.
       const inset = frameInset();
       margin = inset !== null ? inset + 1 : (isMobile ? 6 : 80) * SCALE;

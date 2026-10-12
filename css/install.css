@@ -71,10 +71,11 @@ html[data-ui="sheet"] #qr.i-qr {
 #coords[data-mark-new] .r-row.is-new { background: #fff; color: var(--blue); transition: none; }
 
 /* ---------- ecrãs estreitos ---------- */
-/* A instalação é para um ecrã grande. Num telemóvel: a cartouche em baixo e as
-   últimas entradas em cima, sem QR. */
+/* A instalação é para um ecrã grande, deitado ou ao alto (um ecrã ao alto de
+   720 px mantém esta disposição). Num telemóvel (abaixo de 600 px): a cartouche
+   em baixo e as últimas entradas em cima, sem QR. */
 
-@media (max-width: 767px) {
+@media (max-width: 599px) {
   .i-panel {
     top: calc(var(--m) + var(--in));
     bottom: auto;

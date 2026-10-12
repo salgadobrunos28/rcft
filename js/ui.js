@@ -24,6 +24,8 @@
     return e;
   }
 
+  const isNarrow = () => window.RCFT_DATA ? window.RCFT_DATA.narrow() : window.innerWidth < 768;
+
   function cssPx(name) {
     return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
   }
@@ -31,7 +33,7 @@
   function drawSheet() {
     const W = window.innerWidth, H = window.innerHeight;
     const m = Math.round(cssPx("--m") * S);
-    const narrow = W < 768;
+    const narrow = isNarrow();
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     svg.textContent = "";
 
@@ -95,7 +97,7 @@
   function setLines() {
     const w = window.innerWidth;
     if (!coords || !LINES || !(w > 0)) return;
-    coords.dataset.lines = w < 768 ? "5" : LINES;
+    coords.dataset.lines = isNarrow() ? "5" : LINES;
   }
 
   // ---------- ficha de uma palavra (site, com data-inspect) ----------
@@ -144,7 +146,7 @@
     const cr = card.getBoundingClientRect();
     const cw = cr.width, ch = cr.height;
     let ax, ay;   // canto da ficha onde chega a linha
-    if (W < 768) {
+    if (isNarrow()) {
       card.style.left = card.style.top = "";
       const r = card.getBoundingClientRect();
       ax = r.left; ay = r.bottom;

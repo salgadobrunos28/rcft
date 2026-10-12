@@ -182,21 +182,26 @@ html[data-ui="sheet"] #coords {
 }
 
 /* ---------- ecrãs estreitos ---------- */
+/*
+  No site, abaixo de 768 px. Na instalação só abaixo de 600 px (telemóvel): um
+  ecrã ao alto de 720 px (TV na vertical a 1280x720) mantém a disposição do
+  ecrã grande. As duas listas são iguais; :where() não muda a especificidade.
+*/
 
 @media (max-width: 767px) {
-  html[data-ui="sheet"] { --m: 10px; --in: 8px; }
+  html[data-ui="sheet"]:where(:not([data-mode="install"])) { --m: 10px; --in: 8px; }
 
-  .cartouche {
+  :where(html:not([data-mode="install"])) .cartouche {
     left: calc(var(--m) + var(--in));
     right: calc(var(--m) + var(--in));
     bottom: calc(var(--m) + var(--in) + env(safe-area-inset-bottom));
     width: auto;
   }
 
-  .cartouche > * { padding: 8px 10px; }
-  .c-about p { font-size: 9.5px; line-height: 1.5; }
+  :where(html:not([data-mode="install"])) .cartouche > * { padding: 8px 10px; }
+  :where(html:not([data-mode="install"])) .c-about p { font-size: 9.5px; line-height: 1.5; }
 
-  .readout {
+  :where(html:not([data-mode="install"])) .readout {
     right: calc(var(--m) + var(--in));
     bottom: auto;
     top: calc(var(--m) + 34px);
@@ -205,9 +210,26 @@ html[data-ui="sheet"] #coords {
     line-height: 1.7;
   }
 
-  .r-row { grid-template-columns: 1fr 34px 34px; }
-  .r-head span:first-child { font-size: 0; }
-  .r-head span:first-child::before { content: "Latest"; font-size: var(--t-s); }
+  :where(html:not([data-mode="install"])) .r-row { grid-template-columns: 1fr 34px 34px; }
+  :where(html:not([data-mode="install"])) .r-head span:first-child { font-size: 0; }
+  :where(html:not([data-mode="install"])) .r-head span:first-child::before { content: "Latest"; font-size: var(--t-s); }
+}
+
+@media (max-width: 599px) {
+  html[data-ui="sheet"]:where([data-mode="install"]) { --m: 10px; --in: 8px; }
+
+  :where(html[data-mode="install"]) .cartouche {
+    left: calc(var(--m) + var(--in));
+    right: calc(var(--m) + var(--in));
+    bottom: calc(var(--m) + var(--in) + env(safe-area-inset-bottom));
+    width: auto;
+  }
+
+  :where(html[data-mode="install"]) .cartouche > * { padding: 8px 10px; }
+
+  :where(html[data-mode="install"]) .r-row { grid-template-columns: 1fr 34px 34px; }
+  :where(html[data-mode="install"]) .r-head span:first-child { font-size: 0; }
+  :where(html[data-mode="install"]) .r-head span:first-child::before { content: "Latest"; font-size: var(--t-s); }
 }
 
 /* ---------- formulário (folha) ---------- */

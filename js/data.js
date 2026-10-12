@@ -214,8 +214,16 @@
     return Math.min(3, Math.max(1, Math.round(side / 720 * 100) / 100));
   }
 
+  // Disposição de telemóvel: no site abaixo de 768 px; na instalação só abaixo
+  // de 600 px, para um ecrã ao alto de 720 px manter a disposição grande
+  // (os mesmos limites de css/ui.css e css/install.css).
+  function narrow() {
+    const install = document.documentElement.dataset.mode === "install";
+    return window.innerWidth < (install ? 600 : 768);
+  }
+
   window.RCFT_DATA = {
-    checkVersion, scale, scaleIsAuto,
+    checkVersion, scale, scaleIsAuto, narrow,
     fetchRows, loadCache, parseRows, normCountry,
     addPending, withPending, recentPendingWords
   };

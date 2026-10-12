@@ -40,6 +40,8 @@ tools/              bump-version.sh
 
 The installation uses the same map sheet as the website, with two blocks in the bottom corners: on the left the cartouche (title, totals, legend); on the right the five latest entries, the next entry and a QR code pointing to `QR_URL` in `js/config.js` (the questions page on rcft.cargo.site). There is no cursor and no button. When the form runs inside the Cargo page, it returns to `SITE_URL` after submitting.
 
+The installation also works on a screen standing upright (portrait): at 720x1280 it keeps the same layout as on a landscape screen; only below 600 px wide (a phone) does it switch to the phone layout. To turn the picture on the Raspberry Pi, use Control Centre, Screens (or Screen Configuration), right-click the screen, Orientation; the setting is kept after a reboot and the page adapts by itself.
+
 The scale follows the screen on its own: on a 32" TV the text has the same physical size whether the TV is Full HD (scale 1.5) or HD (about 1.07). To force a value, add `?scale=` to the address. Turn off the TV's overscan ("Just Scan", "Screen Fit" or similar) so the frame is not cropped.
 
 ## Keys

@@ -51,9 +51,9 @@
 /* Linha de chamada, na mesma camada da moldura. */
 #sheet .leader { stroke: #fff; stroke-width: 1; }
 
-/* Telemóvel: a ficha ocupa o lugar da tabela. */
+/* Telemóvel: a ficha ocupa o lugar da tabela (só no site; a instalação não tem tabela de leitura). */
 @media (max-width: 767px) {
-  .w-card {
+  :where(html:not([data-mode="install"])) .w-card {
     left: auto !important;
     top: calc(var(--m) + 34px) !important;
     right: calc(var(--m) + var(--in));
@@ -63,8 +63,8 @@
     font-size: 8px;
     line-height: 1.7;
   }
-  html.has-card .readout { visibility: hidden; }
+  :where(html:not([data-mode="install"])).has-card .readout { visibility: hidden; }
   /* A regra do telemóvel em ui.css troca o primeiro cabeçalho por "Latest". */
-  .w-card .w-head .w-word { font-size: var(--t-s); }
-  .w-card .w-head .w-word::before { content: none; }
+  :where(html:not([data-mode="install"])) .w-card .w-head .w-word { font-size: var(--t-s); }
+  :where(html:not([data-mode="install"])) .w-card .w-head .w-word::before { content: none; }
 }
