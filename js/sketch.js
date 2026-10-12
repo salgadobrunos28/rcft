@@ -436,24 +436,34 @@
 
     /*
       Arestas: cada linha e cada traço do tracejado (8 / 5) é um segmento curto,
-      como na versão original. Há duas formas de os traçar, com a mesma imagem:
+      como na versão original. Há três formas de os traçar, com a mesma imagem:
         "segments"  um stroke por segmento. Com aceleração gráfica (Chrome num
                     Mac, por exemplo) é a forma rápida.
+        "gl"        pela placa gráfica (WebGL), num canvas por baixo do canvas do
+                    p5: cada ligação é um só segmento e o tracejado é feito no
+                    shader. Para aparelhos lentos (Raspberry Pi: 7 fps em
+                    "segments" com 37 palavras a 1080p).
         "batched"   segmentos juntos em blocos de EDGE_BATCH, um stroke por bloco.
                     Sem aceleração gráfica (renderização por software) é 2 a 4
                     vezes mais rápida; com aceleração, um caminho com pedaços
                     espalhados pelo ecrã inteiro é rasterizado inteiro e o desenho
                     cai para poucos fps (medido: cerca de 4 fps num Mac).
       Começa em "segments". Se o aparelho não passar de EDGE_PROBE_FPS, o sketch
-      mede a outra forma durante uns segundos e fica com a mais rápida; volta a
-      medir quando o número de palavras cresce um quarto. ?edges=segments ou
-      ?edges=batched fixa uma delas. O tracejado nativo (setLineDash) não é usado.
+      mede as outras formas, por esta ordem, durante uns segundos cada; fica com a
+      primeira que passe, ou com a mais rápida. Volta a medir quando o número de
+      palavras cresce um quarto. ?edges=segments, ?edges=gl ou ?edges=batched fixa
+      uma delas. O tracejado nativo (setLineDash) não é usado.
     */
     const EDGE_BATCH = 1000;
     const EDGE_PROBE_FPS = 30;
+    const EDGE_ORDER = ["segments", "gl", "batched"];
     const EDGE_PARAM = params.get("edges");
-    let edgeMode = EDGE_PARAM === "batched" ? "batched" : "segments";
-    const probe = EDGE_PARAM ? null : { ms: 0, mt: 0, frames: 0, fps: {}, words: 0, done: false };
+    let edgeMode = EDGE_ORDER.includes(EDGE_PARAM) ? EDGE_PARAM : "segments";
+    const probe = EDGE_ORDER.includes(EDGE_PARAM) ? null : { ms: 0, mt: 0, frames: 0, fps: {}, words: 0, done: false };
+
+    function edgeModeAvailable(m) {
+      return m !== "gl" || !!getEdgeGL();
+    }
 
     function probeEdges(dtMs) {
       if (!probe || C.EDGES !== "network" || nodes.length < 2) return;
@@ -471,11 +481,15 @@
       const fps = probe.frames / (probe.mt / 1000);
       probe.fps[edgeMode] = Math.round(fps);
       probe.ms = probe.mt = probe.frames = 0;
-      if (edgeMode === "segments" && fps < EDGE_PROBE_FPS && !("batched" in probe.fps)) {
-        edgeMode = "batched";
-        return;
+      if (fps < EDGE_PROBE_FPS) {
+        const next = EDGE_ORDER.find(m => !(m in probe.fps) && edgeModeAvailable(m));
+        if (next) { edgeMode = next; return; }
+        // Nenhuma passa: a mais rápida (com "segments" se a diferença for pequena).
+        let best = edgeMode;
+        for (const m in probe.fps) if (probe.fps[m] > probe.fps[best]) best = m;
+        if ("segments" in probe.fps && probe.fps[best] <= probe.fps.segments * 1.1) best = "segments";
+        edgeMode = best;
       }
-      if ("batched" in probe.fps && probe.fps.batched <= probe.fps.segments * 1.1) edgeMode = "segments";
       probe.done = true;
       probe.words = nodes.length;
     }
@@ -492,9 +506,174 @@
     }
 
     function drawEdges() {
+      if (edgeMode === "gl") {
+        // As linhas WebGL têm 1 píxel: a espessura de 0.3 passa a opacidade,
+        // como o canvas 2D faz com linhas mais finas do que um píxel. As
+        // ligações da palavra escolhida (poucas, mais grossas) ficam no canvas 2D.
+        const cov = Math.min(1, 0.3 * SCALE * p.pixelDensity());
+        if (!selEdges) { getEdgeGL().draw([{ same: sameEdges, diff: diffEdges, alpha: cov }]); return; }
+        getEdgeGL().draw([{ same: selEdges.restSame, diff: selEdges.restDiff, alpha: 0.22 * cov }]);
+        strokeEdges(selEdges.mineSame, selEdges.mineDiff, "#ffffff", 0.7);
+        return;
+      }
       if (!selEdges) { strokeEdges(sameEdges, diffEdges, "#ffffff", 0.3); return; }
       strokeEdges(selEdges.restSame, selEdges.restDiff, "rgba(255,255,255,0.22)", 0.3);
       strokeEdges(selEdges.mineSame, selEdges.mineDiff, "#ffffff", 0.7);
+    }
+
+    /*
+      Canvas WebGL das arestas (modo "gl"). Fica por baixo do canvas do p5, que
+      passa a transparente: o azul do fundo é pintado aqui. Como tudo é branco
+      sobre azul, a ordem das camadas não muda a imagem (a grelha e as palavras
+      continuam no canvas do p5). Cada ligação é um segmento com a distância à
+      primeira palavra em cada ponta; o shader descarta os píxeis dos intervalos,
+      com o padrão 8 / 5 a começar na primeira palavra, como em "segments".
+      undefined: ainda não criado; null: o browser não tem WebGL.
+    */
+    let edgeGL;
+
+    function getEdgeGL() {
+      if (edgeGL !== undefined) return edgeGL && !edgeGL.lost ? edgeGL : null;
+      edgeGL = null;
+      const stage = document.getElementById("stage");
+      if (!stage) return null;
+      const cv = document.createElement("canvas");
+      cv.className = "edges-gl";
+      cv.style.pointerEvents = "none";
+      cv.style.display = "none";
+      const gl = cv.getContext("webgl", {
+        alpha: false, antialias: true, depth: false, stencil: false,
+        preserveDrawingBuffer: false, powerPreference: "high-performance"
+      });
+      if (!gl) return null;
+      // Para o painel de diagnóstico: a placa gráfica (V3D no Raspberry Pi;
+      // SwiftShader ou llvmpipe quer dizer WebGL por software, lento).
+      const info = gl.getExtension("WEBGL_debug_renderer_info");
+      const renderer = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || "?");
+
+      const VS = `
+        attribute vec3 a_p;
+        uniform vec2 u_res;
+        varying float v_d;
+        void main() {
+          v_d = a_p.z;
+          gl_Position = vec4(a_p.x / u_res.x * 2.0 - 1.0, 1.0 - a_p.y / u_res.y * 2.0, 0.0, 1.0);
+        }`;
+      const FS = `
+        #ifdef GL_FRAGMENT_PRECISION_HIGH
+        precision highp float;
+        #else
+        precision mediump float;
+        #endif
+        uniform vec4 u_col;
+        uniform vec2 u_dash;
+        varying float v_d;
+        void main() {
+          if (u_dash.y > 0.0 && mod(v_d, u_dash.y) >= u_dash.x) discard;
+          gl_FragColor = u_col;
+        }`;
+      let prog;
+      try {
+        const sh = (type, src) => {
+          const s = gl.createShader(type);
+          gl.shaderSource(s, src);
+          gl.compileShader(s);
+          if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+          return s;
+        };
+        prog = gl.createProgram();
+        gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+        gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+        gl.linkProgram(prog);
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+      } catch (e) {
+        console.warn("[rcft] WebGL indisponível:", e && e.message ? e.message : e);
+        return null;
+      }
+      const loc = {
+        p: gl.getAttribLocation(prog, "a_p"),
+        res: gl.getUniformLocation(prog, "u_res"),
+        col: gl.getUniformLocation(prog, "u_col"),
+        dash: gl.getUniformLocation(prog, "u_dash")
+      };
+      const vbo = gl.createBuffer();
+      let buf = new Float32Array(6 * 1024);
+
+      const api = {
+        cv,
+        renderer,
+        lost: false,
+        show(on) {
+          const d = on ? "" : "none";
+          if (cv.style.display !== d) cv.style.display = d;
+        },
+        // groups: [{ same, diff, alpha }]
+        draw(groups) {
+          const dpr = p.pixelDensity();
+          const w = p.width, h = p.height;
+          const W = Math.max(1, Math.round(w * dpr)), H = Math.max(1, Math.round(h * dpr));
+          if (cv.width !== W || cv.height !== H) {
+            cv.width = W; cv.height = H;
+            cv.style.width = w + "px"; cv.style.height = h + "px";
+          }
+          api.show(true);
+          gl.viewport(0, 0, W, H);
+          gl.clearColor(0, 24 / 255, 1, 1);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+
+          let n = 0;
+          for (const g of groups) n += (g.same.length + g.diff.length) * 6;
+          if (buf.length < n) buf = new Float32Array(Math.max(n, buf.length * 2));
+          let o = 0;
+          const ranges = [];
+          for (const g of groups) {
+            const s0 = o / 3;
+            for (const [a, b] of g.same) {
+              buf[o++] = a.x; buf[o++] = a.y; buf[o++] = 0;
+              buf[o++] = b.x; buf[o++] = b.y; buf[o++] = 0;
+            }
+            const d0 = o / 3;
+            for (const [a, b] of g.diff) {
+              buf[o++] = a.x; buf[o++] = a.y; buf[o++] = 0;
+              buf[o++] = b.x; buf[o++] = b.y; buf[o++] = Math.hypot(b.x - a.x, b.y - a.y);
+            }
+            ranges.push({ alpha: g.alpha, s0, sn: d0 - s0, d0, dn: o / 3 - d0 });
+          }
+          if (!o) return;
+
+          gl.useProgram(prog);
+          gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+          gl.bufferData(gl.ARRAY_BUFFER, buf.subarray(0, o), gl.DYNAMIC_DRAW);
+          gl.enableVertexAttribArray(loc.p);
+          gl.vertexAttribPointer(loc.p, 3, gl.FLOAT, false, 0, 0);
+          gl.uniform2f(loc.res, w, h);
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+          for (const r of ranges) {
+            gl.uniform4f(loc.col, 1, 1, 1, r.alpha);
+            if (r.sn) {
+              gl.uniform2f(loc.dash, 0, 0);
+              gl.drawArrays(gl.LINES, r.s0, r.sn);
+            }
+            if (r.dn) {
+              gl.uniform2f(loc.dash, 8 * SCALE, 13 * SCALE);
+              gl.drawArrays(gl.LINES, r.d0, r.dn);
+            }
+          }
+        }
+      };
+
+      // Se a placa gráfica perder o contexto, volta ao canvas 2D.
+      cv.addEventListener("webglcontextlost", e => {
+        e.preventDefault();
+        api.lost = true;
+        api.show(false);
+        if (edgeMode === "gl") edgeMode = "segments";
+      });
+
+      stage.insertBefore(cv, stage.firstChild);
+      edgeGL = api;
+      return api;
     }
 
     function strokeEdges(sameList, diffList, color, width) {
@@ -694,6 +873,8 @@
         `last sync  ${t}`,
         `error      ${lastError || "-"}`,
         `fps        ${fpsLine()}`,
+        `screen     ${window.innerWidth}x${window.innerHeight}  density ${p.pixelDensity()}`,
+        `webgl      ${C.EDGES !== "network" ? "-" : getEdgeGL() ? getEdgeGL().renderer : "unavailable"}`,
         `version    ${window.RCFT_VERSION || "-"}`
       ].join("\n");
     }
@@ -894,6 +1075,12 @@
       if (params.get("debug") === "1" && el.debug) el.debug.hidden = false;
       // Para testes: posições das palavras na consola (só com ?debug=1).
       if (params.get("debug") === "1") window.RCFT_NODES = () => nodes.map(n => ({ word: n.label, x: n.x, y: n.y, f: n.f }));
+      // Para testes: muda a forma de desenhar as arestas e para a sonda.
+      if (params.get("debug") === "1") window.RCFT_EDGES = m => {
+        if (EDGE_ORDER.includes(m) && edgeModeAvailable(m)) edgeMode = m;
+        if (probe) { probe.done = true; probe.words = Infinity; }
+        return edgeMode;
+      };
       applyResponsive();
       rollNextPos();
 
@@ -948,7 +1135,14 @@
       }
 
       const now = p.millis();
-      p.background(0, 24, 255);
+      // No modo "gl", o azul do fundo e as arestas estão no canvas WebGL por baixo.
+      if (edgeMode === "gl" && !getEdgeGL()) edgeMode = "segments";
+      const gl = edgeMode === "gl" && C.EDGES === "network";
+      if (gl) p.clear();
+      else {
+        if (edgeGL) edgeGL.show(false);
+        p.background(0, 24, 255);
+      }
       if (!canvasReady()) return;
 
       cartesianGrid();
